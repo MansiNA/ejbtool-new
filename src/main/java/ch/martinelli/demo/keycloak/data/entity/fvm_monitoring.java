@@ -86,6 +86,9 @@ public class fvm_monitoring {
     }
 
     public String getBeschreibung() {
+        if(Beschreibung == null) {
+            Beschreibung = "No Description Yet";
+        }
         return Beschreibung;
     }
 
@@ -94,6 +97,9 @@ public class fvm_monitoring {
     }
 
     public String getHandlungs_INFO() {
+        if(Handlungs_INFO == null) {
+            Handlungs_INFO = "No Description Yet";
+        }
         return Handlungs_INFO;
     }
 
