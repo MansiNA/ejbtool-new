@@ -1,4 +1,4 @@
-# Vaadin and Keycloak
+# ejbtool with Keycloak
 
 This project demonstrate the integration of Keycloak with Vaadin.
 
