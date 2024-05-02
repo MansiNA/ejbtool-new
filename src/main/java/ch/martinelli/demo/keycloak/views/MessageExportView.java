@@ -83,7 +83,18 @@ public class MessageExportView extends VerticalLayout {
         System.out.println("Message Export Path: " + exportPath);
 
         uploadFolder = new File(exportPath);
-        linksArea = new DownloadLinksArea(uploadFolder);
+
+        try
+        {
+            linksArea = new DownloadLinksArea(uploadFolder);
+        }
+        catch (Exception e){
+            System.out.println("Actung: DownloadLinksArea konnte mit dem Pfad >" + exportPath + "< nicht instantiiert werden mit Pfad: " + e.getMessage());
+            System.out.println("Es wird /tmp verwendet...");
+            linksArea = new DownloadLinksArea(uploadFolder = new File("/tmp"));
+        }
+
+
         linksArea.setWidth("1800px");
         linksArea.setHeight("150px");
 
