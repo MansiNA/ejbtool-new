@@ -37,6 +37,7 @@ import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.NumberField;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.data.renderer.ComponentRenderer;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -940,11 +941,19 @@ private static VerticalLayout showDialog(fvm_monitoring Inhalt){
         dialog.setHeight("400px");
       //  Button addButton = new Button("add");
         Button cancelButton = new Button("Cancel");
+        Button saveButton = new Button("Save");
         // Add buttons to the footer
-        dialog.getFooter().add(cancelButton);
-      //  dialog.getFooter().add(addButton);
+        dialog.getFooter().add(saveButton, cancelButton);
 
         cancelButton.addClickListener(cancelEvent -> {
+            dialog.close(); // Close the confirmation dialog
+        });
+
+        saveButton.addClickListener(saveEvent -> {
+            System.out.println("saved data....");
+            saveEditedMonitor(monitor);
+            param_Liste=getMonitoring();
+            grid.setItems(param_Liste);
             dialog.close(); // Close the confirmation dialog
         });
 
@@ -966,6 +975,10 @@ private static VerticalLayout showDialog(fvm_monitoring Inhalt){
         tabSheet.setHeightFull();
 
         return tabSheet;
+    }
+
+    private void saveEditedMonitor(fvm_monitoring monitor) {
+        callback.save(monitor);
     }
 
     private Component getHandlungsinformationen(fvm_monitoring monitor) {
@@ -990,32 +1003,31 @@ private static VerticalLayout showDialog(fvm_monitoring Inhalt){
 
             builder.editorType = Constants.EditorType.CLASSIC;
             builder.width = "95%";
-            builder.readOnly = true;
-            builder.hideToolbar=true;
+            builder.hideToolbar=false;
             builder.config = config;
         }).createVaadinCKEditor();
 
-        editor.setReadOnly(true);
+    //    editor.setReadOnly(true);
         editor.getStyle().setMargin ("-5px");
         editor.setValue(monitor.getHandlungs_INFO());
+        editor.addValueChangeListener(event -> monitor.setHandlungs_INFO(event.getValue()));
+//        saveBtn.addClickListener((event -> {
+//            editBtn.setVisible(true);
+//            saveBtn.setVisible(false);
+//            //editor.setReadOnly(true);
+//            editor.setReadOnlyWithToolbarAction(!editor.isReadOnly());
+//
+//        }));
+//
+//        editBtn.addClickListener(e->{
+//            editor.setReadOnlyWithToolbarAction(!editor.isReadOnly());
+//            editBtn.setVisible(false);
+//            saveBtn.setVisible(true);
+//            //editor.setReadOnly(false);
+//        });
 
-        saveBtn.addClickListener((event -> {
-            editBtn.setVisible(true);
-            saveBtn.setVisible(false);
-            //editor.setReadOnly(true);
-            editor.setReadOnlyWithToolbarAction(!editor.isReadOnly());
-
-        }));
-
-        editBtn.addClickListener(e->{
-            editor.setReadOnlyWithToolbarAction(!editor.isReadOnly());
-            editBtn.setVisible(false);
-            saveBtn.setVisible(true);
-            //editor.setReadOnly(false);
-        });
-
-        content.add(editor,editBtn,saveBtn);
-
+//        content.add(editor,editBtn,saveBtn);
+        content.add(editor);
         return content;
     }
 
@@ -1041,32 +1053,31 @@ private static VerticalLayout showDialog(fvm_monitoring Inhalt){
 
             builder.editorType = Constants.EditorType.CLASSIC;
             builder.width = "95%";
-            builder.readOnly = true;
-            builder.hideToolbar=true;
+            builder.hideToolbar=false;
             builder.config = config;
         }).createVaadinCKEditor();
 
-        editor.setReadOnly(true);
+       // editor.setReadOnly(true);
         editor.getStyle().setMargin ("-5px");
         editor.setValue(monitor.getBeschreibung());
+        editor.addValueChangeListener(event -> monitor.setBeschreibung(event.getValue()));
+//        saveBtn.addClickListener((event -> {
+//            editBtn.setVisible(true);
+//            saveBtn.setVisible(false);
+//            //editor.setReadOnly(true);
+//            editor.setReadOnlyWithToolbarAction(!editor.isReadOnly());
+//
+//        }));
+//
+//        editBtn.addClickListener(e->{
+//            editor.setReadOnlyWithToolbarAction(!editor.isReadOnly());
+//            editBtn.setVisible(false);
+//            saveBtn.setVisible(true);
+//            //editor.setReadOnly(false);
+//        });
 
-        saveBtn.addClickListener((event -> {
-            editBtn.setVisible(true);
-            saveBtn.setVisible(false);
-            //editor.setReadOnly(true);
-            editor.setReadOnlyWithToolbarAction(!editor.isReadOnly());
-
-        }));
-
-        editBtn.addClickListener(e->{
-            editor.setReadOnlyWithToolbarAction(!editor.isReadOnly());
-            editBtn.setVisible(false);
-            saveBtn.setVisible(true);
-            //editor.setReadOnly(false);
-        });
-
-        content.add(editor,editBtn,saveBtn);
-
+//        content.add(editor,editBtn,saveBtn);
+        content.add(editor);
         return content;
     }
 
@@ -1080,6 +1091,8 @@ private static VerticalLayout showDialog(fvm_monitoring Inhalt){
         detailabfrage.setValue(monitor.getSQL_Detail());
         detailabfrage.setWidthFull();
 
+        abfrage.addValueChangeListener(event -> monitor.setSQL(event.getValue()));
+        detailabfrage.addValueChangeListener(event -> monitor.setSQL_Detail(event.getValue()));
         content.add(abfrage, detailabfrage);
         return content;
     }
@@ -1102,6 +1115,12 @@ private static VerticalLayout showDialog(fvm_monitoring Inhalt){
         if(monitor.getIS_ACTIVE().equals("1")){
             checkbox.setValue(true);
         }
+
+        // Add value change listeners to trigger binder updates
+        intervall.addValueChangeListener(event -> monitor.setCheck_Intervall(event.getValue()));
+        infoSchwellwert.addValueChangeListener(event -> monitor.setWarning_Schwellwert(event.getValue()));
+        errorSchwellwert.addValueChangeListener(event -> monitor.setError_Schwellwert(event.getValue()));
+        checkbox.addValueChangeListener(event -> monitor.setIS_ACTIVE(event.getValue() ? "1" : "0"));
 
         HorizontalLayout hr = new HorizontalLayout(intervall,infoSchwellwert,errorSchwellwert, checkbox);
         hr.setDefaultVerticalComponentAlignment(Alignment.BASELINE);
