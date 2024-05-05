@@ -54,7 +54,7 @@ public class MainLayout extends AppLayout {
     }
 
     private void addDrawerContent() {
-        H1 appName = new H1("Keycloak");
+        H1 appName = new H1("EJB-Admintool");
         appName.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.NONE);
         Header header = new Header(appName);
 
@@ -68,17 +68,17 @@ public class MainLayout extends AppLayout {
         // For documentation, visit https://github.com/vaadin/vcf-nav#readme
         AppNav nav = new AppNav();
 
-        if (accessChecker.hasAccess(IndexView.class)) {
-            nav.addItem(new AppNavItem("Index", IndexView.class, "la la-globe"));
-        }
-        if (accessChecker.hasAccess(UserView.class)) {
-            nav.addItem(new AppNavItem("User", UserView.class, "la la-file"));
-        }
-        if (accessChecker.hasAccess(AdminView.class)) {
-            nav.addItem(new AppNavItem("Admin", AdminView.class, "la la-users"));
-        }
+//        if (accessChecker.hasAccess(IndexView.class)) {
+//            nav.addItem(new AppNavItem("Index", IndexView.class, "la la-globe"));
+//        }
+//        if (accessChecker.hasAccess(UserView.class)) {
+//            nav.addItem(new AppNavItem("User", UserView.class, "la la-file"));
+//        }
+//        if (accessChecker.hasAccess(AdminView.class)) {
+//            nav.addItem(new AppNavItem("Admin", AdminView.class, "la la-users"));
+//        }
         if (accessChecker.hasAccess(CockpitView.class)) {
-            nav.addItem(new AppNavItem("CockpitView", CockpitView.class, "la la-users"));
+            nav.addItem(new AppNavItem("eKP-Cockpit", CockpitView.class, "la la-users"));
         }
         if (accessChecker.hasAccess(MailboxConfigView.class)) {
             nav.addItem(new AppNavItem("Mailbox Verwaltung", MailboxConfigView.class, "la la-users"));
