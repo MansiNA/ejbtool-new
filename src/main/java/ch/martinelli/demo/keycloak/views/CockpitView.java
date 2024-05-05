@@ -413,6 +413,9 @@ public class CockpitView extends VerticalLayout{
         grid.setItems(param_Liste);
         grid.setHeight("800px");
         grid.addThemeVariants(GridVariant.LUMO_ROW_STRIPES);
+        grid.addThemeVariants(GridVariant.LUMO_COMPACT);
+        grid.setThemeName("dense");
+
         MonitorContextMenu contextMenu = new MonitorContextMenu(grid);
 
         grid.setClassNameGenerator(person -> {
