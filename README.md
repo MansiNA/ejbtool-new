@@ -58,7 +58,8 @@ Now comes a crucial step. We must disable the role mapping to the ID token. When
 
 The configuration must look like this:
 ![Config](misc/image.png)
-
+in new keykloak version:
+![Config](misc/image1.png)
 
 ## Running the application
 
