@@ -2,6 +2,7 @@ package ch.martinelli.demo.keycloak.views;
 
 import ch.martinelli.demo.keycloak.components.appnav.AppNav;
 import ch.martinelli.demo.keycloak.components.appnav.AppNavItem;
+import ch.martinelli.demo.keycloak.utils.OSInfoUtil;
 import ch.martinelli.demo.keycloak.views.admin.AdminView;
 import ch.martinelli.demo.keycloak.views.index.IndexView;
 import ch.martinelli.demo.keycloak.views.user.UserView;
@@ -11,13 +12,11 @@ import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.avatar.Avatar;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.contextmenu.MenuItem;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Footer;
-import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Header;
+import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.menubar.MenuBar;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.server.auth.AccessAnnotationChecker;
@@ -38,6 +37,8 @@ public class MainLayout extends AppLayout {
     public MainLayout(AccessAnnotationChecker accessChecker) {
         this.accessChecker = accessChecker;
 
+
+
         setPrimarySection(Section.DRAWER);
         addDrawerContent();
         addHeaderContent();
@@ -50,12 +51,31 @@ public class MainLayout extends AppLayout {
         viewTitle = new H2();
         viewTitle.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.NONE);
 
-        addToNavbar(true, toggle, viewTitle);
+        Image image = new Image("images/dataport.png", "Dataport Image");
+        System.out.println("Betriebssystem: " + OSInfoUtil.getOsName());
+
+        Span sp= new Span("V1.02");
+        H1 dummy = new H1();
+
+        HorizontalLayout header= new HorizontalLayout(toggle,dummy);
+        header.setDefaultVerticalComponentAlignment(FlexComponent.Alignment.CENTER);
+
+        header.expand(dummy);
+        header.setWidthFull();
+        header.addClassNames("py-0", "px-m");
+        header.add(image,sp);
+
+
+        // addToNavbar(true, toggle);
+        addToNavbar(true, header);
     }
 
     private void addDrawerContent() {
         H1 appName = new H1("eKP Web-Admin");
-        appName.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.NONE);
+        //appName.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.Margin.NONE);
+        appName.addClassNames(LumoUtility.FontSize.LARGE,LumoUtility.Margin.LARGE);
+
+
         Header header = new Header(appName);
 
         Scroller scroller = new Scroller(createNavigation());
@@ -116,7 +136,7 @@ public class MainLayout extends AppLayout {
 
             layout.add(userMenu);
         } else {
-            Button login = new Button("Sign in",
+            Button login = new Button("Login",
                     event -> UI.getCurrent().getPage().setLocation("/user"));
             layout.add(login);
         }
