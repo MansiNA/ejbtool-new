@@ -111,6 +111,10 @@ public class MainLayout extends AppLayout {
             nav.addItem(new AppNavItem("Configuration", ConfigurationView.class, "la la-users"));
         }
 
+        if (accessChecker.hasAccess(TableView.class)) {
+            nav.addItem(new AppNavItem("Tableview", TableView.class, "la la-users"));
+        }
+
         return nav;
     }
 
