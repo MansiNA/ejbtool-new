@@ -17,11 +17,15 @@ import com.vaadin.flow.component.contextmenu.SubMenu;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Anchor;
+import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.*;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
@@ -34,6 +38,7 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.vaadin.tatu.Tree;
 
@@ -51,15 +56,19 @@ public class TableView extends VerticalLayout {
 
     private ConfigurationService service;
     private SqlDefinitionService sqlDefinitionService;
+    private JdbcTemplate jdbcTemplate;
     private static ComboBox<Configuration> comboBox;
+    private TextField descriptionTextField;
+    private TextField sqlTextField;
     public static Connection conn;
     private ResultSet resultset;
-    private Button smallButton = new Button("Export");
+    private Button exportButton = new Button("Export");
+    private Button runButton = new Button("Run");
     private String aktuelle_SQL="";
     private String aktuelle_Tabelle="";
     private Anchor anchor = new Anchor(getStreamResource(aktuelle_Tabelle + ".xls", "default content"), "click to download");
 
-    Grid<LinkedHashMap<String, Object>> grid2 = new Grid<>();
+    Grid<Map<String, Object>> grid2 = new Grid<>();
 
     // PaginatedGrid<String, Object> grid = new PaginatedGrid<>();
 
@@ -67,14 +76,17 @@ public class TableView extends VerticalLayout {
     private static String user;
     private static String password;
 
-    public TableView(@Value("${csv_exportPath}") String p_exportPath, ConfigurationService service, SqlDefinitionService sqlDefinitionService) throws SQLException, IOException {
+    public TableView(@Value("${csv_exportPath}") String p_exportPath, ConfigurationService service, SqlDefinitionService sqlDefinitionService, JdbcTemplate jdbcTemplate) throws SQLException, IOException {
         //add(new H1("Table View"));
-        this.exportPath=p_exportPath;
+        this.exportPath = p_exportPath;
         this.sqlDefinitionService = sqlDefinitionService;
+        this.jdbcTemplate = jdbcTemplate;
+
         System.out.println("Export Path: " + exportPath);
         anchor.getElement().setAttribute("download",true);
         anchor.setEnabled(false);
-        smallButton.setVisible(false);
+        exportButton.setVisible(false);
+        runButton.setEnabled(false);
 
         comboBox = new ComboBox<>("Verbindung");
 
@@ -92,120 +104,11 @@ public class TableView extends VerticalLayout {
         setSizeFull();
         // add(hl);
 
-
-
-
-        MenuBar menuBar = new MenuBar();
-
-        Text selected = new Text("");
-        //ComponentEventListener<ClickEvent<MenuItem>> listener = e -> selected.setText(e.getSource().getText());
-
-        //Read File for SQLs
-        File text = new File("sql.txt");
-        //Creating Scanner instance to read File in Java
-        Scanner scnr = null;
-        try {
-            scnr = new Scanner(text);
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-
-        List<QSql> aList = new ArrayList<QSql>();
-
-
-        ComponentEventListener<ClickEvent<MenuItem>> listener = e -> {
-            selected.setText(e.getSource().getText());
-
-//                try {
-//                    if(e.getSource().getText().contains("ERV-Mapping")) {
-//                        show_grid("select * from books");
-//                    }
-//                    else {
-//                        show_grid("select * from customer");
-//                    }
-//                } catch (SQLException ex) {
-//                    throw new RuntimeException(ex);
-//                }
-//        };
-
-            System.out.println("Ausgewählt: " + e.getSource().getText());
-
-            System.out.println("Export-Path: " + exportPath);
-
-            for (QSql line : aList){
-                if(e.getSource().getText().contains(line.getName()))
-                {
-                    try {
-                        System.out.println("jetzt Ausführen: " + line.getSQL());
-                        aktuelle_SQL=line.getSQL();
-                        aktuelle_Tabelle=line.getName();
-                        show_grid(line.getSQL());
-                        anchor.setEnabled(false);
-                        smallButton.setVisible(true);
-                        //  TextField filenameTextField = new TextField("input file name here");
-                        //  filenameTextField.setValue("default.txt");
-                        //Anchor anchor = new Anchor(getStreamResource("default.txt", "default content"), "click me to download");
-
-                        //      byte[] bytes = Files.readAllBytes(Paths.get("c:\\tmp\\" + aktuelle_Tabelle + ".xls"));
-
-                        //    StreamResource resource = new StreamResource(aktuelle_Tabelle + ".xls",
-//                                () -> new ByteArrayInputStream(bytes));
-                        //    () -> new ByteArrayInputStream("Hello world".getBytes(StandardCharsets.UTF_8)));
-
-
-
-                        // anchor.setHref(getStreamResource(aktuelle_Tabelle + ".xls", " contains some text"));
-                        //       anchor.setHref(resource);
-
-
-                    } catch (SQLException ex) {
-                        throw new RuntimeException(ex);
-                    } catch (IOException ex) {
-                        throw new RuntimeException(ex);
-                    }
-                }
-
-                System.out.println("Name: " + line.getName() );
-                //  System.out.println("SQL: " + line.SQL );
-            }
-
-
-
-        };
-
-        //Div message = new Div(new Text("-->  "), selected);
-        H3 message = new H3(selected);
-
-        MenuItem move = menuBar.addItem("Auswahl");
-        SubMenu moveSubMenu = move.getSubMenu();
-
-
-
-        //Reading each line of the file using Scanner class
-        int lineNumber = 1;
-        while(scnr.hasNextLine()){
-            String line = scnr.nextLine();
-
-            QSql s = new QSql();
-            s.setName(line.split(";")[0]);
-            s.setSQL(line.split(";")[1]);
-            //aList.add(Arrays.asList(line.split(";")));
-            aList.add(s);
-
-
-            //System.out.println("line " + lineNumber + " :" + line);
-            System.out.println("Table: " + line.split(";")[0]);
-            System.out.println("SQL: " + line.split(";")[1]);
-            moveSubMenu.addItem(line.split(";")[0], listener);
-            lineNumber++;
-        }
-
-
         //Export Button
 
-        smallButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
-        smallButton.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
-        smallButton.addClickListener(clickEvent -> {
+        exportButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
+        exportButton.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
+        exportButton.addClickListener(clickEvent -> {
             Notification.show("Exportiere " + aktuelle_Tabelle);
             //System.out.println("aktuelle_SQL:" + aktuelle_SQL);
             try {
@@ -218,51 +121,81 @@ public class TableView extends VerticalLayout {
                 //anchor = new Anchor(streamResource, String.format("%s (%d KB)", file.getName(), (int) file.length() / 1024));
 
                 anchor.setEnabled(true);
-                smallButton.setVisible(false);
+                exportButton.setVisible(false);
                 //      download("c:\\tmp\\" + aktuelle_Tabelle + ".xls");
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         });
 
+        runButton.addClickListener(clickEvent -> {
+            try {
+                show_grid(sqlTextField.getValue());
+                anchor.setEnabled(false);
+                exportButton.setVisible(true);
+                runButton.setEnabled(false);
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        });
 
+        HorizontalLayout treehl = new HorizontalLayout();
+        treehl.add(createTreeGrid(), createSQLTextField());
+      //  treehl.setWidthFull();
+        treehl.setAlignItems(Alignment.BASELINE);
+        add(hl, createDescriptionTextField(),treehl);
 
-
-        HorizontalLayout TableChooser = new HorizontalLayout ();
-        //TableChooser.setAlignItems(Alignment.CENTER);
-        TableChooser.setAlignItems(Alignment.BASELINE );
-        TableChooser.add(menuBar);
-        TableChooser.add(message);
-
-        HorizontalLayout horizontalLayout = new HorizontalLayout ();
-        horizontalLayout.setWidth("100%");
-        // horizontalLayout.setAlignItems(Alignment.CENTER);
-        horizontalLayout.setAlignItems(Alignment.BASELINE);
-        horizontalLayout.setSpacing(true);
-        horizontalLayout.setPadding(true);
-        // horizontalLayout.setMargin(true);
-
-        horizontalLayout.add(hl,TableChooser);
-        horizontalLayout.add(smallButton);
-        horizontalLayout.add(anchor);
-
-
-
-
-
-        horizontalLayout.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
-
-
-        horizontalLayout.setFlexGrow(1,TableChooser);
-        add(horizontalLayout);
-
-        //show_grid("select 'Choose Table first!' as Info from dual");
-        Scroller scroller = new Scroller(createTree());
-        add(scroller);
-        add(grid2);
-
-
+        HorizontalLayout horizontalLayout = new HorizontalLayout();
+        horizontalLayout.add(runButton, exportButton, anchor);
+        horizontalLayout.setAlignItems(FlexComponent.Alignment.BASELINE);
+        add(horizontalLayout, grid2);
     }
+    private TextField createDescriptionTextField() {
+        descriptionTextField = new TextField("Beschreibung");
+        descriptionTextField.setReadOnly(true); // Set as read-only as per your requirement
+        descriptionTextField.setWidth("500px");
+        return descriptionTextField;
+    }
+
+    private TextField createSQLTextField() {
+        sqlTextField = new TextField("SQL");
+        sqlTextField.setReadOnly(true); // Set as read-only as per your requirement
+        sqlTextField.setWidth("400px");
+        return sqlTextField;
+    }
+    private TreeGrid createTreeGrid() {
+        TreeGrid<SqlDefinition> treeGrid = new TreeGrid<>();
+        treeGrid.setItems(sqlDefinitionService.getRootProjects(), sqlDefinitionService ::getChildProjects);
+        treeGrid.addHierarchyColumn(SqlDefinition::getName);
+        treeGrid.getColumns().forEach(col -> col.setAutoWidth(true));
+        treeGrid.setWidth("500px");
+        treeGrid.addExpandListener(event->
+                System.out.println(String.format("Expanded%sitem(s)",event.getItems().size()))
+        );
+        treeGrid.addCollapseListener(event->
+                System.out.println(String.format("Collapsed%sitem(s)",event.getItems().size()))
+        );
+        treeGrid.asSingleSelect().addValueChangeListener(event->{
+
+            SqlDefinition selectedItem=event.getValue();
+            if(selectedItem != null){
+                String sql = selectedItem.getSql();
+                if(sql == null) {
+                    sql = "";
+                }
+                descriptionTextField.setValue(selectedItem.getBeschreibung());
+                sqlTextField.setValue(sql);
+                System.out.println("jetzt Ausführen: " + selectedItem.getSql());
+                aktuelle_SQL = sql;
+                aktuelle_Tabelle = selectedItem.getName();
+                runButton.setEnabled(true);
+            }
+        });
+        return treeGrid;
+    }
+
     private Tree createTree(){
         Tree<SqlDefinition> tree = new Tree<>(
                 SqlDefinition::getName);
@@ -271,7 +204,6 @@ public class TableView extends VerticalLayout {
         tree.setAllRowsVisible(true);
         tree.setItems(sqlDefinitionService.getRootProjects(),
                 sqlDefinitionService::getChildProjects);
-
     //    tree.setItemIconProvider(item -> getIcon(item));
      //   tree.setItemIconSrcProvider(item -> getImageIconSrc(item));
       //  tree.setItemTitleProvider(SqlDefinition::getManager);
@@ -286,8 +218,12 @@ public class TableView extends VerticalLayout {
             if (event.getValue() != null)
                 System.out.println(event.getValue().getName() + " selected");
         });
-        tree.setHeight("350px");
-       // add(tree);
+        tree.setHeight("350px"); //tree.addClassNames("text-l","m-m");
+        tree.addClassNames(LumoUtility.FontSize.XXSMALL, LumoUtility.Margin.NONE);
+
+
+
+        // add(tree);
         return tree;
     }
     private void createTreeOld(){
@@ -295,11 +231,6 @@ public class TableView extends VerticalLayout {
         Tree<SqlDefinition> tree=new Tree<>(SqlDefinition::getName);
         System.out.println(sqlDefinitionService.getAllSqlDefinitions()+"#######################");
         tree.setItems(sqlDefinitionService.getRootProjects(),sqlDefinitionService::getChildProjects);
-
-//tree.setItemIconProvider(item->getIcon(item));
-//tree.setItemIconSrcProvider(item->getImageIconSrc(item));
-
-//tree.setItemTooltipProvider(Projects::getDescription);
 
         tree.addExpandListener(event->
                 System.out.println(String.format("Expanded%sitem(s)",event.getItems().size()))
@@ -315,10 +246,7 @@ public class TableView extends VerticalLayout {
             }
         });
         tree.setAllRowsVisible(true);
-//tree.setWidth("150px");
 
-
-//tree.addClassNames("text-l","m-m");
         tree.addClassNames(LumoUtility.FontSize.XXSMALL,LumoUtility.Margin.NONE);
 
         add(tree);
@@ -350,19 +278,19 @@ public class TableView extends VerticalLayout {
 
 
     private void show_grid(String sql) throws SQLException, IOException {
-        System.out.println(sql);
+        System.out.println(sql + "nnnnnnnnnnnnnnnnnnnnn");
         // Create the grid and set its items
         //Grid<LinkedHashMap<String, Object>> grid2 = new Grid<>();
         grid2.removeAllColumns();
 
         //List<LinkedHashMap<String,Object>> rows = retrieveRows("select * from EKP.ELA_FAVORITEN where rownum<200");
-        List<LinkedHashMap<String,Object>> rows = retrieveRows(sql);
+        List<Map<String,Object>> rows = retrieveRows(sql);
 
         if(!rows.isEmpty()){
             grid2.setItems( rows); // rows is the result of retrieveRows
 
             // Add the columns based on the first row
-            LinkedHashMap<String, Object> s = rows.get(0);
+            Map<String, Object> s = rows.get(0);
             for (Map.Entry<String, Object> entry : s.entrySet()) {
                 grid2.addColumn(h -> h.get(entry.getKey().toString())).setHeader(entry.getKey()).setAutoWidth(true).setResizable(true).setSortable(true);
             }
@@ -392,74 +320,92 @@ public class TableView extends VerticalLayout {
 
     }
 
-    public List<LinkedHashMap<String,Object>> retrieveRows(String queryString) throws SQLException, IOException {
+    public List<Map<String,Object>> retrieveRows(String queryString) {
+        if (queryString != null) {
+            try {
+                return jdbcTemplate.queryForList(queryString);
+            } catch (Exception e) {
+                e.printStackTrace();
+                Notification.show(e.getMessage(), 3000, Notification.Position.TOP_CENTER);
+            }
+        }
+        return Collections.emptyList();
+    }
 
+    public List<LinkedHashMap<String,Object>> retrieveRowsold(String queryString) throws SQLException, IOException {
 
         List<LinkedHashMap<String, Object>> rows = new LinkedList<LinkedHashMap<String, Object>>();
 
-        PreparedStatement s = null;
-        ResultSet rs = null;
-        try
-        {
-            //    String url="jdbc:oracle:thin:@37.120.189.200:1521:xe";
-            //    String user="SYSTEM";
-            //    String password="Michael123";
+        if(queryString != null) {
 
-            DriverManagerDataSource ds = new DriverManagerDataSource();
-            Configuration conf;
-            conf = comboBox.getValue();
+            PreparedStatement s = null;
+            ResultSet rs = null;
+            try {
+                //    String url="jdbc:oracle:thin:@37.120.189.200:1521:xe";
+                //    String user="SYSTEM";
+                //    String password="Michael123";
 
-            Class.forName("oracle.jdbc.driver.OracleDriver");
+                DriverManagerDataSource ds = new DriverManagerDataSource();
+                Configuration conf;
+                conf = comboBox.getValue();
 
-            //    Connection conn=DriverManager.getConnection(url, user, password);
-            Connection conn=DriverManager.getConnection(conf.getDb_Url(), conf.getUserName(), conf.getPassword());
+                Class.forName("oracle.jdbc.driver.OracleDriver");
 
-
-            s = conn.prepareStatement(queryString);
-
-            int timeout = s.getQueryTimeout();
-            if(timeout != 0)
-                s.setQueryTimeout(0);
-
-            rs = s.executeQuery();
+                //    Connection conn=DriverManager.getConnection(url, user, password);
+                Connection conn = DriverManager.getConnection(conf.getDb_Url(), conf.getUserName(), conf.getPassword());
 
 
-            List<String> columns = new LinkedList<>();
-            ResultSetMetaData resultSetMetaData = rs.getMetaData();
-            int colCount = resultSetMetaData.getColumnCount();
-            for(int i= 1 ; i < colCount+1 ; i++) {
-                columns.add(resultSetMetaData.getColumnLabel(i));
-            }
+                s = conn.prepareStatement(queryString);
 
-            while (rs.next()) {
-                LinkedHashMap<String, Object> row  = new LinkedHashMap<String, Object>();
-                for(String col : columns) {
-                    int colIndex = columns.indexOf(col)+1;
-                    String object = rs.getObject(colIndex)== null ? "" : String.valueOf(rs.getObject(colIndex));
-                    row.put(col, object);
+                int timeout = s.getQueryTimeout();
+                if (timeout != 0)
+                    s.setQueryTimeout(0);
+
+                rs = s.executeQuery();
+
+
+                List<String> columns = new LinkedList<>();
+                ResultSetMetaData resultSetMetaData = rs.getMetaData();
+                int colCount = resultSetMetaData.getColumnCount();
+                for (int i = 1; i < colCount + 1; i++) {
+                    columns.add(resultSetMetaData.getColumnLabel(i));
                 }
 
-                rows.add(row);
+                while (rs.next()) {
+                    LinkedHashMap<String, Object> row = new LinkedHashMap<String, Object>();
+                    for (String col : columns) {
+                        int colIndex = columns.indexOf(col) + 1;
+                        String object = rs.getObject(colIndex) == null ? "" : String.valueOf(rs.getObject(colIndex));
+                        row.put(col, object);
+                    }
+
+                    rows.add(row);
+                }
+            } catch (SQLException | IllegalArgumentException | SecurityException e) {
+                // e.printStackTrace();
+                // add(new Text(e.getMessage()));
+
+                Notification notification = Notification.show(e.getMessage());
+                notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+
+                return Collections.emptyList();
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            } finally {
+
+                try {
+                    rs.close();
+                } catch (Exception e) { /* Ignored */ }
+                try {
+                    s.close();
+                } catch (Exception e) { /* Ignored */ }
+                try {
+                    conn.close();
+                } catch (Exception e) { /* Ignored */ }
+
+
             }
-        } catch (SQLException | IllegalArgumentException  | SecurityException e) {
-            // e.printStackTrace();
-            // add(new Text(e.getMessage()));
-
-            Notification notification = Notification.show(e.getMessage());
-            notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
-
-            return Collections.emptyList();
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        } finally {
-
-            try { rs.close(); } catch (Exception e) { /* Ignored */ }
-            try { s.close(); } catch (Exception e) { /* Ignored */ }
-            try { conn.close(); } catch (Exception e) { /* Ignored */ }
-
-
         }
-        // conn.close();
         return rows;
     }
 

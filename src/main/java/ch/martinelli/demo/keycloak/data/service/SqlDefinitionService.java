@@ -34,19 +34,28 @@ public class SqlDefinitionService {
 
     // Add more service methods as needed (e.g., saveSqlDefinition, deleteSqlDefinition, etc.)
     public List<SqlDefinition> getRootProjects() {
-        return sqlDefinitionList
+        List<SqlDefinition> rootProjects = sqlDefinitionList
                 .stream()
                 .filter(sqlDef -> sqlDef.getPid() == null)
-              //  .filter(projects -> hasAccess(user.getRoles(), projects.getRole_access()))
                 .collect(Collectors.toList());
+
+        // Log the names of root projects
+        rootProjects.forEach(project -> System.out.println("Root Project: " + project.getName()));
+
+        return rootProjects;
     }
 
     public List<SqlDefinition> getChildProjects(SqlDefinition parent) {
-        System.out.println(parent.getName()+"--------------------------yesssssssssss");
-        return sqlDefinitionList
+
+        List<SqlDefinition> childProjects = sqlDefinitionList
                 .stream()
                 .filter(sqlDef -> Objects.equals(sqlDef.getPid(), parent.getId()))
-               // .filter(projects -> hasAccess(user.getRoles(), projects.getRole_access()))
                 .collect(Collectors.toList());
+
+        // Log the names of child projects
+        childProjects.forEach(project -> System.out.println("Child Project of " + parent.getName() + ": " + project.getName()));
+
+        return childProjects;
     }
+
 }
