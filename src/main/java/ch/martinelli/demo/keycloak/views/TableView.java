@@ -61,8 +61,8 @@ public class TableView extends VerticalLayout {
     private Button exportButton = new Button("Export");
     private Button runButton = new Button("Run");
     private String aktuelle_SQL="";
-    private String aktuelle_Tabelle="";
-    private Anchor anchor = new Anchor(getStreamResource(aktuelle_Tabelle + ".xls", "default content"), "click to download");
+    //private String aktuelle_Tabelle="";
+    private Anchor anchor = new Anchor(getStreamResource("query.xls", "default content"), "click to download");
 
     Grid<Map<String, Object>> grid2 = new Grid<>();
 
@@ -105,12 +105,12 @@ public class TableView extends VerticalLayout {
         exportButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         exportButton.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
         exportButton.addClickListener(clickEvent -> {
-            Notification.show("Exportiere " + aktuelle_Tabelle);
+            Notification.show("Exportiere Daten" );
             //System.out.println("aktuelle_SQL:" + aktuelle_SQL);
             try {
-                generateExcel(exportPath + aktuelle_Tabelle + ".xls",aktuelle_SQL);
+                generateExcel(exportPath + "query.xls",aktuelle_SQL);
 
-                File file= new File(exportPath + aktuelle_Tabelle +".xls");
+                File file= new File(exportPath + "query.xls");
                 StreamResource streamResource = new StreamResource(file.getName(),()->getStream(file));
 
                 anchor.setHref(streamResource);
@@ -138,7 +138,11 @@ public class TableView extends VerticalLayout {
         });
 
         HorizontalLayout treehl = new HorizontalLayout();
-        treehl.add(createTreeGrid(), createSQLTextField());
+
+        TreeGrid tg= createTreeGrid();
+
+        treehl.add(tg, createSQLTextField());
+        treehl.setFlexGrow(1, tg);
 
       //  treehl.setWidthFull();
         treehl.setAlignItems(Alignment.BASELINE);
@@ -172,7 +176,7 @@ public class TableView extends VerticalLayout {
         sqlTextField = new TextArea("Query");
         sqlTextField.setReadOnly(true); // Set as read-only as per your requirement
         //sqlTextField.setMaxLength(2000);
-        //sqlTextField.setWidth("600px");
+        sqlTextField.setWidth("800px");
         sqlTextField.setClassName("tfwb");
         return sqlTextField;
     }
@@ -181,7 +185,7 @@ public class TableView extends VerticalLayout {
         treeGrid.setItems(sqlDefinitionService.getRootProjects(), sqlDefinitionService ::getChildProjects);
         treeGrid.addHierarchyColumn(SqlDefinition::getName);
         treeGrid.getColumns().forEach(col -> col.setAutoWidth(true));
-     //   treeGrid.setWidth("200px");
+        treeGrid.setWidth("350px");
         treeGrid.addExpandListener(event->
                 System.out.println(String.format("Expanded %s item(s)",event.getItems().size()))
         );
@@ -197,12 +201,12 @@ public class TableView extends VerticalLayout {
                     sql = "";
                 }
 
-                queryDetails.setSummaryText(selectedItem.getBeschreibung());
+                queryDetails.setSummaryText(selectedItem.getName() + ": " + selectedItem.getBeschreibung());
 
                 sqlTextField.setValue(sql);
                 System.out.println("jetzt Ausführen: " + selectedItem.getSql());
                 aktuelle_SQL = sql;
-                aktuelle_Tabelle = selectedItem.getName();
+               // aktuelle_Tabelle = selectedItem.getName();
                 runButton.setEnabled(true);
             }
         });
