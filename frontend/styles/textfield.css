@@ -1,3 +1,8 @@
 :host([readonly]) [part='input-field'] {
     border: none;
 }
+
+.tfwb {
+    border:     none;
+    background: white; /* Has shading image by default */
+}

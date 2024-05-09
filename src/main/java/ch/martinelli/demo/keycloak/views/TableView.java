@@ -8,14 +8,17 @@ import ch.martinelli.demo.keycloak.data.service.SqlDefinitionService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Anchor;
+import com.vaadin.flow.component.html.Article;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.BoxSizing;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.router.PageTitle;
@@ -50,8 +53,9 @@ public class TableView extends VerticalLayout {
     private SqlDefinitionService sqlDefinitionService;
     private JdbcTemplate jdbcTemplate;
     private static ComboBox<Configuration> comboBox;
-    private TextField descriptionTextField;
-    private TextField sqlTextField;
+    //private Article descriptionTextField;
+    private TextArea sqlTextField;
+    private Details queryDetails;
     public static Connection conn;
     private ResultSet resultset;
     private Button exportButton = new Button("Export");
@@ -135,26 +139,41 @@ public class TableView extends VerticalLayout {
 
         HorizontalLayout treehl = new HorizontalLayout();
         treehl.add(createTreeGrid(), createSQLTextField());
+
       //  treehl.setWidthFull();
         treehl.setAlignItems(Alignment.BASELINE);
-        add(hl, createDescriptionTextField(),treehl);
+
+        queryDetails = new Details("SQL Auswahl",treehl);
+        queryDetails.setOpened(true);
+        queryDetails.setWidthFull();
+        queryDetails.setSummaryText("Bitte Abfrage auswählen");
+
+
+        add(hl, queryDetails);
 
         HorizontalLayout horizontalLayout = new HorizontalLayout();
         horizontalLayout.add(runButton, exportButton, anchor);
         horizontalLayout.setAlignItems(Alignment.BASELINE);
         add(horizontalLayout, grid2);
     }
-    private TextField createDescriptionTextField() {
-        descriptionTextField = new TextField("Beschreibung");
-        descriptionTextField.setReadOnly(true); // Set as read-only as per your requirement
-        descriptionTextField.setWidth("500px");
+
+    /*
+    private Article createDescriptionTextField() {
+        descriptionTextField = new Article();
+      //  descriptionTextField.setReadOnly(true); // Set as read-only as per your requirement
+        descriptionTextField.setWidthFull();
+        descriptionTextField.setText("Bitte Abfrage auswählen.");
         return descriptionTextField;
     }
 
-    private TextField createSQLTextField() {
-        sqlTextField = new TextField("SQL");
+     */
+
+    private TextArea createSQLTextField() {
+        sqlTextField = new TextArea("Query");
         sqlTextField.setReadOnly(true); // Set as read-only as per your requirement
-        sqlTextField.setWidth("400px");
+        //sqlTextField.setMaxLength(2000);
+        //sqlTextField.setWidth("600px");
+        sqlTextField.setClassName("tfwb");
         return sqlTextField;
     }
     private TreeGrid createTreeGrid() {
@@ -162,12 +181,12 @@ public class TableView extends VerticalLayout {
         treeGrid.setItems(sqlDefinitionService.getRootProjects(), sqlDefinitionService ::getChildProjects);
         treeGrid.addHierarchyColumn(SqlDefinition::getName);
         treeGrid.getColumns().forEach(col -> col.setAutoWidth(true));
-        treeGrid.setWidth("500px");
+     //   treeGrid.setWidth("200px");
         treeGrid.addExpandListener(event->
-                System.out.println(String.format("Expanded%sitem(s)",event.getItems().size()))
+                System.out.println(String.format("Expanded %s item(s)",event.getItems().size()))
         );
         treeGrid.addCollapseListener(event->
-                System.out.println(String.format("Collapsed%sitem(s)",event.getItems().size()))
+                System.out.println(String.format("Collapsed %s item(s)",event.getItems().size()))
         );
         treeGrid.asSingleSelect().addValueChangeListener(event->{
 
@@ -177,7 +196,9 @@ public class TableView extends VerticalLayout {
                 if(sql == null) {
                     sql = "";
                 }
-                descriptionTextField.setValue(selectedItem.getBeschreibung());
+
+                queryDetails.setSummaryText(selectedItem.getBeschreibung());
+
                 sqlTextField.setValue(sql);
                 System.out.println("jetzt Ausführen: " + selectedItem.getSql());
                 aktuelle_SQL = sql;
@@ -270,7 +291,7 @@ public class TableView extends VerticalLayout {
 
 
     private void show_grid(String sql) throws SQLException, IOException {
-        System.out.println(sql + "nnnnnnnnnnnnnnnnnnnnn");
+        System.out.println("Execute SQL: " + sql );
         // Create the grid and set its items
         //Grid<LinkedHashMap<String, Object>> grid2 = new Grid<>();
         grid2.removeAllColumns();
@@ -300,9 +321,9 @@ public class TableView extends VerticalLayout {
             //grid2.setPaginatorSize(5);
             // Add the grid to the page
 
-            this.setPadding(false);
-            this.setSpacing(false);
-            this.setBoxSizing(BoxSizing.CONTENT_BOX);
+//            this.setPadding(false);
+//            this.setSpacing(false);
+//            this.setBoxSizing(BoxSizing.CONTENT_BOX);
 
         }
         else {
@@ -324,7 +345,7 @@ public class TableView extends VerticalLayout {
         return Collections.emptyList();
     }
 
-    public List<LinkedHashMap<String,Object>> retrieveRowsold(String queryString) throws SQLException, IOException {
+    public List<LinkedHashMap<String,Object>> retrieveRows_old(String queryString) throws SQLException, IOException {
 
         List<LinkedHashMap<String, Object>> rows = new LinkedList<LinkedHashMap<String, Object>>();
 
