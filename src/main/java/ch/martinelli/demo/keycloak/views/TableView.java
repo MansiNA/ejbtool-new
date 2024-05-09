@@ -177,7 +177,8 @@ public class TableView extends VerticalLayout {
         sqlTextField.setReadOnly(true); // Set as read-only as per your requirement
         //sqlTextField.setMaxLength(2000);
         sqlTextField.setWidth("800px");
-        sqlTextField.setClassName("tfwb");
+
+        sqlTextField.addClassName("no-boarder");
         return sqlTextField;
     }
     private TreeGrid createTreeGrid() {
