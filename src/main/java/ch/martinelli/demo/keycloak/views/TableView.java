@@ -343,7 +343,9 @@ public class TableView extends VerticalLayout {
                 return jdbcTemplate.queryForList(queryString);
             } catch (Exception e) {
                 e.printStackTrace();
-                Notification.show(e.getMessage(), 3000, Notification.Position.TOP_CENTER);
+                //Notification.show(e.getMessage(), 10000, Notification.Position.TOP_CENTER);
+                Notification.show(e.getCause().getMessage(), 5000, Notification.Position.MIDDLE);
+
             }
         }
         return Collections.emptyList();
