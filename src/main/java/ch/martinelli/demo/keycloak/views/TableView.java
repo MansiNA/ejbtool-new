@@ -192,6 +192,13 @@ public class TableView extends VerticalLayout {
         treeGrid.addCollapseListener(event->
                 System.out.println(String.format("Collapsed %s item(s)",event.getItems().size()))
         );
+
+        treeGrid.setThemeName("dense");
+        treeGrid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
+        treeGrid.addThemeVariants(GridVariant.LUMO_NO_ROW_BORDERS);
+        treeGrid.addThemeVariants(GridVariant.LUMO_COMPACT);
+
+
         treeGrid.asSingleSelect().addValueChangeListener(event->{
 
             SqlDefinition selectedItem=event.getValue();
@@ -321,6 +328,7 @@ public class TableView extends VerticalLayout {
 
             grid2.getStyle().set("resize", "vertical");
             grid2.getStyle().set("overflow", "auto");
+            grid2.setThemeName("dense");
 
             //grid2.setPaginatorSize(5);
             // Add the grid to the page
