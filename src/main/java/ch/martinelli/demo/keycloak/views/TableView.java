@@ -98,6 +98,12 @@ public class TableView extends VerticalLayout {
         comboBox.setItemLabelGenerator(Configuration::get_Message_Connection);
 
         //  comboBox.setValue(service.findAllConfigurations().stream().findFirst().get());
+        // Add value change listener to comboBox
+        comboBox.addValueChangeListener(event -> {
+            if (event.getValue() != null) {
+                runButton.setEnabled(true);
+            }
+        });
 
         HorizontalLayout hl = new HorizontalLayout();
         hl.add(comboBox);
