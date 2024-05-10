@@ -179,7 +179,7 @@ public class TableView extends VerticalLayout {
      */
 
     private TextArea createSQLTextField() {
-        sqlTextField = new TextArea();
+        sqlTextField = new TextArea("Abfrage:");
         sqlTextField.setReadOnly(true); // Set as read-only as per your requirement
         //sqlTextField.setMaxLength(2000);
         sqlTextField.setWidth("900px");
@@ -188,6 +188,11 @@ public class TableView extends VerticalLayout {
 
        // sqlTextField.addClassName("no-boarder");
         sqlTextField.getStyle().set("--vaadin-input-field-readonly-border", "0px");
+
+     //   sqlTextField.getStyle().set("--vaadin-input-field-label-font-weight", "800");
+
+        sqlTextField.addClassName("my-special-classname");
+
         sqlTextField.addThemeVariants(
                 TextAreaVariant.LUMO_SMALL,
                // TextAreaVariant.LUMO_ALIGN_RIGHT,
