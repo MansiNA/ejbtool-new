@@ -1,29 +1,24 @@
 package ch.martinelli.demo.keycloak.views;
 
 import ch.martinelli.demo.keycloak.data.entity.Configuration;
-import ch.martinelli.demo.keycloak.data.entity.QSql;
 import ch.martinelli.demo.keycloak.data.entity.SqlDefinition;
 import ch.martinelli.demo.keycloak.data.entity.TableInfo;
 import ch.martinelli.demo.keycloak.data.service.ConfigurationService;
 import ch.martinelli.demo.keycloak.data.service.SqlDefinitionService;
-import com.vaadin.flow.component.ClickEvent;
-import com.vaadin.flow.component.ComponentEventListener;
-import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
-import com.vaadin.flow.component.contextmenu.MenuItem;
-import com.vaadin.flow.component.contextmenu.SubMenu;
+import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
 import com.vaadin.flow.component.html.Anchor;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.H3;
-import com.vaadin.flow.component.menubar.MenuBar;
+import com.vaadin.flow.component.html.Article;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
-import com.vaadin.flow.component.orderedlayout.*;
+import com.vaadin.flow.component.orderedlayout.BoxSizing;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.router.PageTitle;
@@ -40,7 +35,7 @@ import org.apache.poi.ss.usermodel.CellStyle;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.vaadin.tatu.Tree;
+//import org.vaadin.tatu.Tree;
 
 import java.io.*;
 import java.sql.*;
@@ -58,15 +53,18 @@ public class TableView extends VerticalLayout {
     private SqlDefinitionService sqlDefinitionService;
     private JdbcTemplate jdbcTemplate;
     private static ComboBox<Configuration> comboBox;
-    private TextField descriptionTextField;
-    private TextField sqlTextField;
+
+    //private Article descriptionTextField;
+    private TextArea sqlTextField;
+    private Details queryDetails;
     public static Connection conn;
     private ResultSet resultset;
     private Button exportButton = new Button("Export");
     private Button runButton = new Button("Run");
     private String aktuelle_SQL="";
-    private String aktuelle_Tabelle="";
-    private Anchor anchor = new Anchor(getStreamResource(aktuelle_Tabelle + ".xls", "default content"), "click to download");
+
+    //private String aktuelle_Tabelle="";
+    private Anchor anchor = new Anchor(getStreamResource("query.xls", "default content"), "click to download");
 
     Grid<Map<String, Object>> grid2 = new Grid<>();
 
@@ -100,7 +98,9 @@ public class TableView extends VerticalLayout {
 
         HorizontalLayout hl = new HorizontalLayout();
         hl.add(comboBox);
-        hl.setAlignItems(FlexComponent.Alignment.BASELINE);
+      
+        hl.setAlignItems(Alignment.BASELINE);
+
         setSizeFull();
         // add(hl);
 
@@ -109,12 +109,14 @@ public class TableView extends VerticalLayout {
         exportButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         exportButton.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
         exportButton.addClickListener(clickEvent -> {
-            Notification.show("Exportiere " + aktuelle_Tabelle);
+
+            Notification.show("Exportiere Daten" );
             //System.out.println("aktuelle_SQL:" + aktuelle_SQL);
             try {
-                generateExcel(exportPath + aktuelle_Tabelle + ".xls",aktuelle_SQL);
+                generateExcel(exportPath + "query.xls",aktuelle_SQL);
 
-                File file= new File(exportPath + aktuelle_Tabelle +".xls");
+                File file= new File(exportPath + "query.xls");
+
                 StreamResource streamResource = new StreamResource(file.getName(),()->getStream(file));
 
                 anchor.setHref(streamResource);
@@ -142,27 +144,48 @@ public class TableView extends VerticalLayout {
         });
 
         HorizontalLayout treehl = new HorizontalLayout();
-        treehl.add(createTreeGrid(), createSQLTextField());
+
+
+        TreeGrid tg= createTreeGrid();
+
+        treehl.add(tg, createSQLTextField());
+        treehl.setFlexGrow(1, tg);
+
       //  treehl.setWidthFull();
         treehl.setAlignItems(Alignment.BASELINE);
-        add(hl, createDescriptionTextField(),treehl);
+
+        queryDetails = new Details("SQL Auswahl",treehl);
+        queryDetails.setOpened(true);
+        queryDetails.setWidthFull();
+        queryDetails.setSummaryText("Bitte Abfrage auswählen");
+
+
+        add(hl, queryDetails);
 
         HorizontalLayout horizontalLayout = new HorizontalLayout();
         horizontalLayout.add(runButton, exportButton, anchor);
-        horizontalLayout.setAlignItems(FlexComponent.Alignment.BASELINE);
+        horizontalLayout.setAlignItems(Alignment.BASELINE);
         add(horizontalLayout, grid2);
     }
-    private TextField createDescriptionTextField() {
-        descriptionTextField = new TextField("Beschreibung");
-        descriptionTextField.setReadOnly(true); // Set as read-only as per your requirement
-        descriptionTextField.setWidth("500px");
+
+    /*
+    private Article createDescriptionTextField() {
+        descriptionTextField = new Article();
+      //  descriptionTextField.setReadOnly(true); // Set as read-only as per your requirement
+        descriptionTextField.setWidthFull();
+        descriptionTextField.setText("Bitte Abfrage auswählen.");
         return descriptionTextField;
     }
 
-    private TextField createSQLTextField() {
-        sqlTextField = new TextField("SQL");
+     */
+
+    private TextArea createSQLTextField() {
+        sqlTextField = new TextArea("Query");
         sqlTextField.setReadOnly(true); // Set as read-only as per your requirement
-        sqlTextField.setWidth("400px");
+        //sqlTextField.setMaxLength(2000);
+        sqlTextField.setWidth("800px");
+
+        sqlTextField.addClassName("no-boarder");
         return sqlTextField;
     }
     private TreeGrid createTreeGrid() {
@@ -170,13 +193,20 @@ public class TableView extends VerticalLayout {
         treeGrid.setItems(sqlDefinitionService.getRootProjects(), sqlDefinitionService ::getChildProjects);
         treeGrid.addHierarchyColumn(SqlDefinition::getName);
         treeGrid.getColumns().forEach(col -> col.setAutoWidth(true));
-        treeGrid.setWidth("500px");
+
+        treeGrid.setWidth("350px");
         treeGrid.addExpandListener(event->
-                System.out.println(String.format("Expanded%sitem(s)",event.getItems().size()))
+                System.out.println(String.format("Expanded %s item(s)",event.getItems().size()))
         );
         treeGrid.addCollapseListener(event->
-                System.out.println(String.format("Collapsed%sitem(s)",event.getItems().size()))
+                System.out.println(String.format("Collapsed %s item(s)",event.getItems().size()))
         );
+
+        treeGrid.setThemeName("dense");
+        treeGrid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
+        treeGrid.addThemeVariants(GridVariant.LUMO_NO_ROW_BORDERS);
+        treeGrid.addThemeVariants(GridVariant.LUMO_COMPACT);
+
         treeGrid.asSingleSelect().addValueChangeListener(event->{
 
             SqlDefinition selectedItem=event.getValue();
@@ -185,18 +215,21 @@ public class TableView extends VerticalLayout {
                 if(sql == null) {
                     sql = "";
                 }
-                descriptionTextField.setValue(selectedItem.getBeschreibung());
+
+                queryDetails.setSummaryText(selectedItem.getName() + ": " + selectedItem.getBeschreibung());
+
                 sqlTextField.setValue(sql);
                 System.out.println("jetzt Ausführen: " + selectedItem.getSql());
                 aktuelle_SQL = sql;
-                aktuelle_Tabelle = selectedItem.getName();
+               // aktuelle_Tabelle = selectedItem.getName();
+
                 runButton.setEnabled(true);
             }
         });
         return treeGrid;
     }
 
-    private Tree createTree(){
+  /*  private Tree createTree(){
         Tree<SqlDefinition> tree = new Tree<>(
                 SqlDefinition::getName);
         System.out.println(sqlDefinitionService.getRootProjects().size()+"..............vvvvvvvvvvvvvvvvvvvvvvvvvv");
@@ -251,6 +284,7 @@ public class TableView extends VerticalLayout {
 
         add(tree);
     }
+*/
 
 
     private InputStream getStream(File file) {
@@ -278,7 +312,9 @@ public class TableView extends VerticalLayout {
 
 
     private void show_grid(String sql) throws SQLException, IOException {
-        System.out.println(sql + "nnnnnnnnnnnnnnnnnnnnn");
+
+        System.out.println("Execute SQL: " + sql );
+
         // Create the grid and set its items
         //Grid<LinkedHashMap<String, Object>> grid2 = new Grid<>();
         grid2.removeAllColumns();
@@ -304,13 +340,15 @@ public class TableView extends VerticalLayout {
 
             grid2.getStyle().set("resize", "vertical");
             grid2.getStyle().set("overflow", "auto");
+            grid2.setThemeName("dense");
 
             //grid2.setPaginatorSize(5);
             // Add the grid to the page
 
-            this.setPadding(false);
-            this.setSpacing(false);
-            this.setBoxSizing(BoxSizing.CONTENT_BOX);
+
+//            this.setPadding(false);
+//            this.setSpacing(false);
+//            this.setBoxSizing(BoxSizing.CONTENT_BOX);
 
         }
         else {
@@ -326,13 +364,14 @@ public class TableView extends VerticalLayout {
                 return jdbcTemplate.queryForList(queryString);
             } catch (Exception e) {
                 e.printStackTrace();
-                Notification.show(e.getMessage(), 3000, Notification.Position.TOP_CENTER);
+                //Notification.show(e.getMessage(), 10000, Notification.Position.TOP_CENTER);
+                Notification.show(e.getCause().getMessage(), 5000, Notification.Position.MIDDLE);
             }
         }
         return Collections.emptyList();
     }
 
-    public List<LinkedHashMap<String,Object>> retrieveRowsold(String queryString) throws SQLException, IOException {
+    public List<LinkedHashMap<String,Object>> retrieveRows_old(String queryString) throws SQLException, IOException {
 
         List<LinkedHashMap<String, Object>> rows = new LinkedList<LinkedHashMap<String, Object>>();
 
