@@ -25,6 +25,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import com.zaxxer.hikari.HikariDataSource;
 import jakarta.annotation.security.RolesAllowed;
 import org.apache.poi.hssf.usermodel.HSSFFont;
 import org.apache.poi.hssf.usermodel.HSSFRow;
@@ -33,10 +34,12 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
 //import org.vaadin.tatu.Tree;
 
+import javax.sql.DataSource;
 import java.io.*;
 import java.sql.*;
 import java.util.*;
@@ -359,17 +362,24 @@ public class TableView extends VerticalLayout {
     }
 
     public List<Map<String,Object>> retrieveRows(String queryString) {
+        List<Map<String, Object>> rows;
         if (queryString != null) {
             try {
-                return jdbcTemplate.queryForList(queryString);
+                Configuration conf = comboBox.getValue();
+                DataSource dataSource = getDataSourceUsingParameter(conf.getDb_Url(), conf.getUserName(), conf.getPassword());
+                jdbcTemplate = new JdbcTemplate(dataSource);
+                rows = jdbcTemplate.queryForList(queryString);
+                connectionClose(jdbcTemplate);
+                return rows;
             } catch (Exception e) {
                 e.printStackTrace();
-                //Notification.show(e.getMessage(), 10000, Notification.Position.TOP_CENTER);
                 Notification.show(e.getCause().getMessage(), 5000, Notification.Position.MIDDLE);
             }
         }
+
         return Collections.emptyList();
     }
+
 
     public List<LinkedHashMap<String,Object>> retrieveRows_old(String queryString) throws SQLException, IOException {
 
@@ -578,6 +588,48 @@ public class TableView extends VerticalLayout {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
+        }
+    }
+    public DataSource getDataSourceUsingParameter(String dbUrl, String dbUser, String dbPassword) {
+
+        if(dbUser != null) {
+            System.out.println(dbUrl);
+            System.out.println("Username = " + dbUser + " Password = " + dbPassword);
+            DataSource dataSource = DataSourceBuilder
+                    .create()
+                    .url(dbUrl)
+                    .username(dbUser)
+                    .password(dbPassword)
+                    .build();
+            return dataSource;
+        }
+
+        throw new RuntimeException("Database connection not found: " + dbUser);
+    }
+
+    public void connectionClose(JdbcTemplate jdbcTemplate) {
+        Connection connection = null;
+        DataSource dataSource = null;
+        try {
+            // Retrieve the connection from the DataSource
+            connection = jdbcTemplate.getDataSource().getConnection();
+            dataSource = jdbcTemplate.getDataSource();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+
+                    if (dataSource instanceof HikariDataSource) {
+                        ((HikariDataSource) dataSource).close();
+                    }
+
+                } catch (SQLException e) {
+
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
