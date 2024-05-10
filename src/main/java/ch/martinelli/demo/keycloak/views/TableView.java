@@ -20,7 +20,9 @@ import com.vaadin.flow.component.orderedlayout.BoxSizing;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
+import com.vaadin.flow.component.textfield.TextAreaVariant;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.component.textfield.TextFieldVariant;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -68,7 +70,7 @@ public class TableView extends VerticalLayout {
     private String aktuelle_SQL="";
 
     //private String aktuelle_Tabelle="";
-    private Anchor anchor = new Anchor(getStreamResource("query.xls", "default content"), "click to download");
+    private Anchor anchor = new Anchor(getStreamResource("query.xlsx", "default content"), "click to download");
 
     Grid<Map<String, Object>> grid2 = new Grid<>();
     List<Map<String,Object>> rows;
@@ -122,7 +124,7 @@ public class TableView extends VerticalLayout {
         exportButton.addClickListener(clickEvent -> {
 
             Notification.show("Exportiere Daten" );
-            generateExcelFile(rows, exportPath + "query.xls");
+            generateExcelFile(rows, exportPath + "query.xlsx");
             exportButton.setVisible(false);
 
         });
@@ -177,12 +179,22 @@ public class TableView extends VerticalLayout {
      */
 
     private TextArea createSQLTextField() {
-        sqlTextField = new TextArea("Query");
+        sqlTextField = new TextArea();
         sqlTextField.setReadOnly(true); // Set as read-only as per your requirement
         //sqlTextField.setMaxLength(2000);
-        sqlTextField.setWidth("800px");
+        sqlTextField.setWidth("900px");
+      //  sqlTextField.setEnabled(false);
+        sqlTextField.setHelperText("SQL");
 
-        sqlTextField.addClassName("no-boarder");
+       // sqlTextField.addClassName("no-boarder");
+        sqlTextField.getStyle().set("--vaadin-input-field-readonly-border", "0px");
+        sqlTextField.addThemeVariants(
+                TextAreaVariant.LUMO_SMALL,
+               // TextAreaVariant.LUMO_ALIGN_RIGHT,
+                TextAreaVariant.LUMO_HELPER_ABOVE_FIELD
+        );
+
+
         return sqlTextField;
     }
     private TreeGrid createTreeGrid() {
