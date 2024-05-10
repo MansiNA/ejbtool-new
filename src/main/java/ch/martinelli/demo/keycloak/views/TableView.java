@@ -5,6 +5,7 @@ import ch.martinelli.demo.keycloak.data.entity.SqlDefinition;
 import ch.martinelli.demo.keycloak.data.entity.TableInfo;
 import ch.martinelli.demo.keycloak.data.service.ConfigurationService;
 import ch.martinelli.demo.keycloak.data.service.SqlDefinitionService;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -31,8 +32,8 @@ import org.apache.poi.hssf.usermodel.HSSFFont;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -70,6 +71,7 @@ public class TableView extends VerticalLayout {
     private Anchor anchor = new Anchor(getStreamResource("query.xls", "default content"), "click to download");
 
     Grid<Map<String, Object>> grid2 = new Grid<>();
+    List<Map<String,Object>> rows;
 
     // PaginatedGrid<String, Object> grid = new PaginatedGrid<>();
 
@@ -120,23 +122,9 @@ public class TableView extends VerticalLayout {
         exportButton.addClickListener(clickEvent -> {
 
             Notification.show("Exportiere Daten" );
-            //System.out.println("aktuelle_SQL:" + aktuelle_SQL);
-            try {
-                generateExcel(exportPath + "query.xls",aktuelle_SQL);
+            generateExcelFile(rows, exportPath + "query.xls");
+            exportButton.setVisible(false);
 
-                File file= new File(exportPath + "query.xls");
-
-                StreamResource streamResource = new StreamResource(file.getName(),()->getStream(file));
-
-                anchor.setHref(streamResource);
-                //anchor = new Anchor(streamResource, String.format("%s (%d KB)", file.getName(), (int) file.length() / 1024));
-
-                anchor.setEnabled(true);
-                exportButton.setVisible(false);
-                //      download("c:\\tmp\\" + aktuelle_Tabelle + ".xls");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
         });
 
         runButton.addClickListener(clickEvent -> {
@@ -329,7 +317,7 @@ public class TableView extends VerticalLayout {
         grid2.removeAllColumns();
 
         //List<LinkedHashMap<String,Object>> rows = retrieveRows("select * from EKP.ELA_FAVORITEN where rownum<200");
-        List<Map<String,Object>> rows = retrieveRows(sql);
+        rows = retrieveRows(sql);
 
         if(!rows.isEmpty()){
             grid2.setItems( rows); // rows is the result of retrieveRows
@@ -462,6 +450,65 @@ public class TableView extends VerticalLayout {
             }
         }
         return rows;
+    }
+
+    private void generateExcelFile(List<Map<String, Object>> rows, String fileName) {
+        // Create a new Excel workbook and sheet
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("Sheet1");
+
+        // Create a header row with column names
+        Row headerRow = sheet.createRow(0);
+        int cellIndex = 0;
+        for (String columnName : rows.get(0).keySet()) {
+            Cell cell = headerRow.createCell(cellIndex++);
+            cell.setCellValue(columnName);
+        }
+
+        // Populate the data rows
+        int rowIndex = 1;
+        for (Map<String, Object> row : rows) {
+            Row dataRow = sheet.createRow(rowIndex++);
+            cellIndex = 0;
+            for (Object value : row.values()) {
+                Cell cell = dataRow.createCell(cellIndex++);
+                if (value != null) {
+                    if (value instanceof Number) {
+                        cell.setCellValue(((Number) value).doubleValue());
+                    } else if (value instanceof String) {
+                        cell.setCellValue((String) value);
+                    } else if (value instanceof Boolean) {
+                        cell.setCellValue((Boolean) value);
+                    } else {
+                        // Handle other data types as needed
+                        cell.setCellValue(value.toString());
+                    }
+                } else {
+                    cell.setCellValue(""); // Handle null values as empty strings
+                }
+            }
+        }
+
+        try {
+
+            // Write the workbook to the specified file
+            try (FileOutputStream fileOut = new FileOutputStream(fileName)) {
+                workbook.write(fileOut);
+            }
+
+            // Close the workbook
+            workbook.close();
+
+            File file = new File(fileName);
+            StreamResource streamResource = new StreamResource(file.getName(), () -> getStream(file));
+            // Configure the anchor element for downloading the file
+            anchor.setHref(streamResource);
+          //  anchor.getElement().setAttribute("download", true);
+            anchor.setEnabled(true);
+       //     UI.getCurrent().getPage().executeJs("arguments[0].click()", anchor);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private static void generateExcel(String file, String query) throws IOException {
