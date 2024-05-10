@@ -53,6 +53,7 @@ public class TableView extends VerticalLayout {
     private SqlDefinitionService sqlDefinitionService;
     private JdbcTemplate jdbcTemplate;
     private static ComboBox<Configuration> comboBox;
+
     //private Article descriptionTextField;
     private TextArea sqlTextField;
     private Details queryDetails;
@@ -61,6 +62,7 @@ public class TableView extends VerticalLayout {
     private Button exportButton = new Button("Export");
     private Button runButton = new Button("Run");
     private String aktuelle_SQL="";
+
     //private String aktuelle_Tabelle="";
     private Anchor anchor = new Anchor(getStreamResource("query.xls", "default content"), "click to download");
 
@@ -96,7 +98,9 @@ public class TableView extends VerticalLayout {
 
         HorizontalLayout hl = new HorizontalLayout();
         hl.add(comboBox);
+      
         hl.setAlignItems(Alignment.BASELINE);
+
         setSizeFull();
         // add(hl);
 
@@ -105,12 +109,14 @@ public class TableView extends VerticalLayout {
         exportButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
         exportButton.addThemeVariants(ButtonVariant.LUMO_SUCCESS);
         exportButton.addClickListener(clickEvent -> {
+
             Notification.show("Exportiere Daten" );
             //System.out.println("aktuelle_SQL:" + aktuelle_SQL);
             try {
                 generateExcel(exportPath + "query.xls",aktuelle_SQL);
 
                 File file= new File(exportPath + "query.xls");
+
                 StreamResource streamResource = new StreamResource(file.getName(),()->getStream(file));
 
                 anchor.setHref(streamResource);
@@ -138,6 +144,7 @@ public class TableView extends VerticalLayout {
         });
 
         HorizontalLayout treehl = new HorizontalLayout();
+
 
         TreeGrid tg= createTreeGrid();
 
@@ -186,6 +193,7 @@ public class TableView extends VerticalLayout {
         treeGrid.setItems(sqlDefinitionService.getRootProjects(), sqlDefinitionService ::getChildProjects);
         treeGrid.addHierarchyColumn(SqlDefinition::getName);
         treeGrid.getColumns().forEach(col -> col.setAutoWidth(true));
+
         treeGrid.setWidth("350px");
         treeGrid.addExpandListener(event->
                 System.out.println(String.format("Expanded %s item(s)",event.getItems().size()))
@@ -198,7 +206,6 @@ public class TableView extends VerticalLayout {
         treeGrid.addThemeVariants(GridVariant.LUMO_NO_BORDER);
         treeGrid.addThemeVariants(GridVariant.LUMO_NO_ROW_BORDERS);
         treeGrid.addThemeVariants(GridVariant.LUMO_COMPACT);
-
 
         treeGrid.asSingleSelect().addValueChangeListener(event->{
 
@@ -215,6 +222,7 @@ public class TableView extends VerticalLayout {
                 System.out.println("jetzt Ausführen: " + selectedItem.getSql());
                 aktuelle_SQL = sql;
                // aktuelle_Tabelle = selectedItem.getName();
+
                 runButton.setEnabled(true);
             }
         });
@@ -278,6 +286,7 @@ public class TableView extends VerticalLayout {
     }
 */
 
+
     private InputStream getStream(File file) {
         FileInputStream stream = null;
         try {
@@ -303,7 +312,9 @@ public class TableView extends VerticalLayout {
 
 
     private void show_grid(String sql) throws SQLException, IOException {
+
         System.out.println("Execute SQL: " + sql );
+
         // Create the grid and set its items
         //Grid<LinkedHashMap<String, Object>> grid2 = new Grid<>();
         grid2.removeAllColumns();
@@ -334,6 +345,7 @@ public class TableView extends VerticalLayout {
             //grid2.setPaginatorSize(5);
             // Add the grid to the page
 
+
 //            this.setPadding(false);
 //            this.setSpacing(false);
 //            this.setBoxSizing(BoxSizing.CONTENT_BOX);
@@ -354,7 +366,6 @@ public class TableView extends VerticalLayout {
                 e.printStackTrace();
                 //Notification.show(e.getMessage(), 10000, Notification.Position.TOP_CENTER);
                 Notification.show(e.getCause().getMessage(), 5000, Notification.Position.MIDDLE);
-
             }
         }
         return Collections.emptyList();
