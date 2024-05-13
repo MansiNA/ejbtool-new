@@ -30,6 +30,10 @@ public class SqlDefinitionService {
                 .orElseThrow(() -> new RuntimeException("SqlDefinition not found with id: " + id));
     }
 
+    public SqlDefinition saveSqlDefinition(SqlDefinition sqlDefinition) {
+        return sqlDefinitionRepository.save(sqlDefinition);
+    }
+
     // Add more service methods as needed (e.g., saveSqlDefinition, deleteSqlDefinition, etc.)
     public List<SqlDefinition> getRootProjects() {
         List<SqlDefinition> rootProjects = sqlDefinitionList
