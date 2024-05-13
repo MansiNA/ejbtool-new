@@ -70,8 +70,6 @@ public class TableView extends VerticalLayout {
     private String aktuelle_SQL="";
 
     //private String aktuelle_Tabelle="";
-    private Anchor anchor = new Anchor(getStreamResource("query.xlsx", "default content"), "click to download");
-
     Grid<Map<String, Object>> grid2 = new Grid<>();
     List<Map<String,Object>> rows;
 
@@ -88,8 +86,6 @@ public class TableView extends VerticalLayout {
         this.jdbcTemplate = jdbcTemplate;
 
         System.out.println("Export Path: " + exportPath);
-        anchor.getElement().setAttribute("download",true);
-        anchor.setEnabled(false);
         exportButton.setVisible(false);
         runButton.setEnabled(false);
 
@@ -125,14 +121,11 @@ public class TableView extends VerticalLayout {
 
             Notification.show("Exportiere Daten" );
             generateExcelFile(rows, exportPath + "query.xlsx");
-            exportButton.setVisible(false);
-
         });
 
         runButton.addClickListener(clickEvent -> {
             try {
                 show_grid(sqlTextField.getValue());
-                anchor.setEnabled(false);
                 exportButton.setVisible(true);
                 runButton.setEnabled(false);
             } catch (SQLException ex) {
@@ -162,7 +155,7 @@ public class TableView extends VerticalLayout {
         add(hl, queryDetails);
 
         HorizontalLayout horizontalLayout = new HorizontalLayout();
-        horizontalLayout.add(runButton, exportButton, anchor);
+        horizontalLayout.add(runButton, exportButton);
         horizontalLayout.setAlignItems(Alignment.BASELINE);
         add(horizontalLayout, grid2);
     }
@@ -518,11 +511,12 @@ public class TableView extends VerticalLayout {
 
             File file = new File(fileName);
             StreamResource streamResource = new StreamResource(file.getName(), () -> getStream(file));
-            // Configure the anchor element for downloading the file
-            anchor.setHref(streamResource);
-          //  anchor.getElement().setAttribute("download", true);
-            anchor.setEnabled(true);
-       //     UI.getCurrent().getPage().executeJs("arguments[0].click()", anchor);
+
+            Anchor anchor = new Anchor(streamResource, "");
+            anchor.getElement().setAttribute("download", true);
+            anchor.getElement().getStyle().set("display", "none");
+            add(anchor);
+            UI.getCurrent().getPage().executeJs("arguments[0].click()", anchor);
         } catch (IOException e) {
             e.printStackTrace();
         }
