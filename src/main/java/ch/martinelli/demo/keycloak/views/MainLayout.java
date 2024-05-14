@@ -27,6 +27,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * The main view is a top-level placeholder for other views.
  */
@@ -36,10 +39,11 @@ public class MainLayout extends AppLayout {
     private H2 viewTitle;
     public static boolean isAdmin;
     public static boolean isUser;
+    public static List<String> userRoles;
 
     public MainLayout(AccessAnnotationChecker accessChecker) {
         this.accessChecker = accessChecker;
-
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         // Check if the current user has the "ROLE_ADMIN" authority
         isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
@@ -49,6 +53,11 @@ public class MainLayout extends AppLayout {
         isUser = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch(authority -> authority.equals("ROLE_USER"));
+
+        // Get all roles assigned to the user
+        userRoles = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
 
         System.out.println("user.."+ isUser);
         System.out.println("admin.."+ isAdmin);

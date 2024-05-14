@@ -2,9 +2,11 @@ package ch.martinelli.demo.keycloak.data.service;
 
 import ch.martinelli.demo.keycloak.data.entity.SqlDefinition;
 import ch.martinelli.demo.keycloak.data.repository.SqlDefinitionRepository;
+import ch.martinelli.demo.keycloak.views.MainLayout;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -35,11 +37,17 @@ public class SqlDefinitionService {
         return sqlDefinitionRepository.save(sqlDefinition);
     }
 
+    public void deleteSqlDefinitionById(Long id) {
+        sqlDefinitionRepository.deleteById(id);
+    }
+
     // Add more service methods as needed (e.g., saveSqlDefinition, deleteSqlDefinition, etc.)
     public List<SqlDefinition> getRootProjects() {
+
         List<SqlDefinition> rootProjects = sqlDefinitionList
                 .stream()
                 .filter(sqlDef -> sqlDef.getPid() == null)
+                .filter(projects -> hasAccess(projects.getAccessRoles()))
                 .collect(Collectors.toList());
 
         // Log the names of root projects
@@ -53,6 +61,7 @@ public class SqlDefinitionService {
         List<SqlDefinition> childProjects = sqlDefinitionList
                 .stream()
                 .filter(sqlDef -> Objects.equals(sqlDef.getPid(), parent.getId()))
+                .filter(projects -> hasAccess(projects.getAccessRoles()))
                 .collect(Collectors.toList());
 
         // Log the names of child projects
@@ -61,4 +70,19 @@ public class SqlDefinitionService {
         return childProjects;
     }
 
+    private boolean hasAccess(String projectRoles) {
+        if (projectRoles != null) {
+            String[] roleList = projectRoles.split(",");
+            // here noted rolelist have ADMIN, USER like that
+            // here noted userRoles have ROLE_ADMIN, ROLE_USER like that
+            for (String role : roleList) {
+                for (String userRole : MainLayout.userRoles) {
+                    if (userRole.contains(role)){
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
 }

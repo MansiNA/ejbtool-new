@@ -6,10 +6,12 @@ import ch.martinelli.demo.keycloak.data.entity.TableInfo;
 import ch.martinelli.demo.keycloak.data.service.ConfigurationService;
 import ch.martinelli.demo.keycloak.data.service.SqlDefinitionService;
 import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.details.Details;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
@@ -44,6 +46,7 @@ import javax.sql.DataSource;
 import java.io.*;
 import java.sql.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @PageTitle("Table Viewer")
 @Route(value = "table-view", layout= MainLayout.class)
@@ -233,15 +236,16 @@ public class TableView extends VerticalLayout {
             }
         });
 
-        if(MainLayout.isAdmin) {
-            GridContextMenu<SqlDefinition> contextMenu = treeGrid.addContextMenu();
-            GridMenuItem<SqlDefinition> editItem = contextMenu.addItem("Edit", event -> {
-                showEditAndNewDialog(event.getItem().get(), "Edit");
-            });
-            GridMenuItem<SqlDefinition> newItem = contextMenu.addItem("New", event -> {
-                showEditAndNewDialog(event.getItem().get(), "New");
-            });
-        }
+        GridContextMenu<SqlDefinition> contextMenu = treeGrid.addContextMenu();
+        GridMenuItem<SqlDefinition> editItem = contextMenu.addItem("Edit", event -> {
+            showEditAndNewDialog(event.getItem().get(), "Edit");
+        });
+        GridMenuItem<SqlDefinition> newItem = contextMenu.addItem("New", event -> {
+            showEditAndNewDialog(event.getItem().get(), "New");
+        });
+        GridMenuItem<SqlDefinition> deleteItem = contextMenu.addItem("Delete", event -> {
+            deleteTreeGridItem(event.getItem().get());
+        });
 
         return treeGrid;
     }
@@ -258,7 +262,6 @@ public class TableView extends VerticalLayout {
             dialog.add(editSqlDefination(newSqlDefinition, true)); // For adding new entry
         } else {
             dialog.add(editSqlDefination(sqlDefinition, false)); // For editing existing entry
-
         }
 
         dialog.setDraggable(true);
@@ -312,6 +315,24 @@ public class TableView extends VerticalLayout {
         pid.setValue(sqlDefinition.getPid() != null ? sqlDefinition.getPid().toString() : "");
         pid.setWidthFull();
 
+        MultiSelectComboBox<String> rolesComboBox = new MultiSelectComboBox<>("Roles");
+        List<SqlDefinition> sqlDefinitionList = sqlDefinitionService.getAllSqlDefinitions();
+        rolesComboBox.setWidthFull();
+
+        // Collect unique access roles from all SqlDefinition items
+        Set<String> uniqueAccessRoles = sqlDefinitionList.stream()
+                .map(SqlDefinition::getAccessRoles)
+                .filter(Objects::nonNull)
+                .flatMap(accessRoles -> Arrays.stream(accessRoles.split(",")))
+                .map(String::trim)
+                .collect(Collectors.toSet());
+        rolesComboBox.setItems(uniqueAccessRoles);
+
+        String accessRoles = sqlDefinition.getAccessRoles();
+        if(accessRoles != null) {
+            rolesComboBox.setValue(accessRoles.split(","));
+        }
+
         // Add value change listeners to trigger binder updates
         name.addValueChangeListener(event -> sqlDefinition.setName(event.getValue()));
         sql.addValueChangeListener(event -> sqlDefinition.setSql(event.getValue()));
@@ -329,8 +350,43 @@ public class TableView extends VerticalLayout {
             }
         });
 
-        content.add(name,sql,beschreibung, pid);
+        rolesComboBox.addValueChangeListener(event -> {
+            String selectedRolesString = String.join(",", event.getValue());
+            sqlDefinition.setAccessRoles(selectedRolesString);
+        });
+
+        content.add(name,sql,beschreibung, pid, rolesComboBox);
         return content;
+    }
+
+    private Component deleteTreeGridItem(SqlDefinition sqlDefinition) {
+
+        VerticalLayout dialogLayout = new VerticalLayout();
+        Dialog dialog = new Dialog();
+        dialog.setDraggable(true);
+        dialog.setResizable(true);
+        dialog.setWidth("500px");
+        dialog.setHeight("150px");
+        Button cancelButton = new Button("Cancel");
+        Button deleteButton = new Button("Delete");
+        Text deleteConfirmationText = new Text("Are you sure you want to delete?");
+        dialog.add(deleteConfirmationText);
+        dialog.getFooter().add(deleteButton, cancelButton);
+
+        cancelButton.addClickListener(cancelEvent -> {
+            dialog.close(); // Close the confirmation dialog
+        });
+
+        deleteButton.addClickListener(saveEvent -> {
+            sqlDefinitionService.deleteSqlDefinitionById(sqlDefinition.getId());
+            sqlDefinitionService.getAllSqlDefinitions();
+            treeGrid.setItems(sqlDefinitionService.getRootProjects(), sqlDefinitionService ::getChildProjects);
+            dialog.close(); // Close the confirmation dialog
+        });
+
+        dialog.open();
+
+        return dialogLayout;
     }
 
   /*  private Tree createTree(){
