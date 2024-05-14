@@ -22,7 +22,8 @@ public class SqlDefinitionService {
     }
 
     public List<SqlDefinition> getAllSqlDefinitions() {
-        return sqlDefinitionRepository.findAll();
+        sqlDefinitionList = sqlDefinitionRepository.findAll();
+        return sqlDefinitionList;
     }
 
     public SqlDefinition getSqlDefinitionById(Long id) {

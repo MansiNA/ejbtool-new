@@ -278,7 +278,7 @@ public class TableView extends VerticalLayout {
             } else {
                 saveSqlDefinition(sqlDefinition);
             }
-
+            sqlDefinitionService.getAllSqlDefinitions();
             treeGrid.setItems(sqlDefinitionService.getRootProjects(), sqlDefinitionService ::getChildProjects);
          //   rows = retrieveRows();
            // treeg.setItems(param_Liste);
