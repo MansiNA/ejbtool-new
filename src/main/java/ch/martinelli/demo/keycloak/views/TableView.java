@@ -233,13 +233,15 @@ public class TableView extends VerticalLayout {
             }
         });
 
-        GridContextMenu<SqlDefinition> contextMenu = treeGrid.addContextMenu();
-        GridMenuItem<SqlDefinition> editItem = contextMenu.addItem("Edit", event -> {
-            showEditAndNewDialog(event.getItem().get(), "Edit");
-        });
-        GridMenuItem<SqlDefinition> newItem = contextMenu.addItem("New", event -> {
-            showEditAndNewDialog(event.getItem().get(), "New");
-        });
+        if(MainLayout.isAdmin) {
+            GridContextMenu<SqlDefinition> contextMenu = treeGrid.addContextMenu();
+            GridMenuItem<SqlDefinition> editItem = contextMenu.addItem("Edit", event -> {
+                showEditAndNewDialog(event.getItem().get(), "Edit");
+            });
+            GridMenuItem<SqlDefinition> newItem = contextMenu.addItem("New", event -> {
+                showEditAndNewDialog(event.getItem().get(), "New");
+            });
+        }
 
         return treeGrid;
     }

@@ -22,6 +22,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.server.auth.AccessAnnotationChecker;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
@@ -33,12 +34,24 @@ public class MainLayout extends AppLayout {
 
     private final AccessAnnotationChecker accessChecker;
     private H2 viewTitle;
+    public static boolean isAdmin;
+    public static boolean isUser;
 
     public MainLayout(AccessAnnotationChecker accessChecker) {
         this.accessChecker = accessChecker;
 
+        // Check if the current user has the "ROLE_ADMIN" authority
+        isAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
 
+        // Check if the current user has the "ROLE_USER" authority
+        isUser = SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch(authority -> authority.equals("ROLE_USER"));
 
+        System.out.println("user.."+ isUser);
+        System.out.println("admin.."+ isAdmin);
         setPrimarySection(Section.DRAWER);
         addDrawerContent();
         addHeaderContent();
