@@ -602,8 +602,10 @@ public class TableView extends VerticalLayout {
             // Write the workbook to the specified file
             try (FileOutputStream fileOut = new FileOutputStream(fileName)) {
                 workbook.write(fileOut);
+            } catch (Exception e) {
+                // e.printStackTrace();
+                Notification.show(e.getMessage(), 5000, Notification.Position.MIDDLE);
             }
-
             // Close the workbook
             workbook.close();
 
