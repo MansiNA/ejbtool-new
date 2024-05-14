@@ -236,17 +236,18 @@ public class TableView extends VerticalLayout {
             }
         });
 
-        GridContextMenu<SqlDefinition> contextMenu = treeGrid.addContextMenu();
-        GridMenuItem<SqlDefinition> editItem = contextMenu.addItem("Edit", event -> {
-            showEditAndNewDialog(event.getItem().get(), "Edit");
-        });
-        GridMenuItem<SqlDefinition> newItem = contextMenu.addItem("New", event -> {
-            showEditAndNewDialog(event.getItem().get(), "New");
-        });
-        GridMenuItem<SqlDefinition> deleteItem = contextMenu.addItem("Delete", event -> {
-            deleteTreeGridItem(event.getItem().get());
-        });
-
+        if(MainLayout.isAdmin) {
+            GridContextMenu<SqlDefinition> contextMenu = treeGrid.addContextMenu();
+            GridMenuItem<SqlDefinition> editItem = contextMenu.addItem("Edit", event -> {
+                showEditAndNewDialog(event.getItem().get(), "Edit");
+            });
+            GridMenuItem<SqlDefinition> newItem = contextMenu.addItem("New", event -> {
+                showEditAndNewDialog(event.getItem().get(), "New");
+            });
+            GridMenuItem<SqlDefinition> deleteItem = contextMenu.addItem("Delete", event -> {
+                deleteTreeGridItem(event.getItem().get());
+            });
+        }
         return treeGrid;
     }
 
