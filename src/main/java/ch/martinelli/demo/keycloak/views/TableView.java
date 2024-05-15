@@ -5,29 +5,29 @@ import ch.martinelli.demo.keycloak.data.entity.SqlDefinition;
 import ch.martinelli.demo.keycloak.data.entity.TableInfo;
 import ch.martinelli.demo.keycloak.data.service.ConfigurationService;
 import ch.martinelli.demo.keycloak.data.service.SqlDefinitionService;
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.Text;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.combobox.MultiSelectComboBox;
 import com.vaadin.flow.component.details.Details;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.grid.GridVariant;
+import com.vaadin.flow.component.grid.contextmenu.GridContextMenu;
+import com.vaadin.flow.component.grid.contextmenu.GridMenuItem;
 import com.vaadin.flow.component.html.Anchor;
-import com.vaadin.flow.component.html.Article;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
-import com.vaadin.flow.component.orderedlayout.BoxSizing;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
-import com.vaadin.flow.component.textfield.TextArea;
-import com.vaadin.flow.component.textfield.TextAreaVariant;
-import com.vaadin.flow.component.textfield.TextField;
-import com.vaadin.flow.component.textfield.TextFieldVariant;
+import com.vaadin.flow.component.textfield.*;
 import com.vaadin.flow.component.treegrid.TreeGrid;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.server.StreamResource;
-import com.vaadin.flow.theme.lumo.LumoUtility;
 import com.zaxxer.hikari.HikariDataSource;
 import jakarta.annotation.security.RolesAllowed;
 import org.apache.poi.hssf.usermodel.HSSFFont;
@@ -46,6 +46,7 @@ import javax.sql.DataSource;
 import java.io.*;
 import java.sql.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @PageTitle("Table Viewer")
 @Route(value = "table-view", layout= MainLayout.class)
@@ -59,6 +60,7 @@ public class TableView extends VerticalLayout {
     private SqlDefinitionService sqlDefinitionService;
     private JdbcTemplate jdbcTemplate;
     private static ComboBox<Configuration> comboBox;
+    private TreeGrid<SqlDefinition> treeGrid;
 
     //private Article descriptionTextField;
     private TextArea sqlTextField;
@@ -70,8 +72,6 @@ public class TableView extends VerticalLayout {
     private String aktuelle_SQL="";
 
     //private String aktuelle_Tabelle="";
-    private Anchor anchor = new Anchor(getStreamResource("query.xlsx", "default content"), "click to download");
-
     Grid<Map<String, Object>> grid2 = new Grid<>();
     List<Map<String,Object>> rows;
 
@@ -88,8 +88,6 @@ public class TableView extends VerticalLayout {
         this.jdbcTemplate = jdbcTemplate;
 
         System.out.println("Export Path: " + exportPath);
-        anchor.getElement().setAttribute("download",true);
-        anchor.setEnabled(false);
         exportButton.setVisible(false);
         runButton.setEnabled(false);
 
@@ -125,14 +123,11 @@ public class TableView extends VerticalLayout {
 
             Notification.show("Exportiere Daten" );
             generateExcelFile(rows, exportPath + "query.xlsx");
-            exportButton.setVisible(false);
-
         });
 
         runButton.addClickListener(clickEvent -> {
             try {
                 show_grid(sqlTextField.getValue());
-                anchor.setEnabled(false);
                 exportButton.setVisible(true);
                 runButton.setEnabled(false);
             } catch (SQLException ex) {
@@ -162,7 +157,7 @@ public class TableView extends VerticalLayout {
         add(hl, queryDetails);
 
         HorizontalLayout horizontalLayout = new HorizontalLayout();
-        horizontalLayout.add(runButton, exportButton, anchor);
+        horizontalLayout.add(runButton, exportButton);
         horizontalLayout.setAlignItems(Alignment.BASELINE);
         add(horizontalLayout, grid2);
     }
@@ -203,7 +198,7 @@ public class TableView extends VerticalLayout {
         return sqlTextField;
     }
     private TreeGrid createTreeGrid() {
-        TreeGrid<SqlDefinition> treeGrid = new TreeGrid<>();
+        treeGrid = new TreeGrid<>();
         treeGrid.setItems(sqlDefinitionService.getRootProjects(), sqlDefinitionService ::getChildProjects);
         treeGrid.addHierarchyColumn(SqlDefinition::getName);
         treeGrid.getColumns().forEach(col -> col.setAutoWidth(true));
@@ -240,7 +235,159 @@ public class TableView extends VerticalLayout {
                 runButton.setEnabled(true);
             }
         });
+
+        if(MainLayout.isAdmin) {
+            GridContextMenu<SqlDefinition> contextMenu = treeGrid.addContextMenu();
+            GridMenuItem<SqlDefinition> editItem = contextMenu.addItem("Edit", event -> {
+                showEditAndNewDialog(event.getItem().get(), "Edit");
+            });
+            GridMenuItem<SqlDefinition> newItem = contextMenu.addItem("New", event -> {
+                showEditAndNewDialog(event.getItem().get(), "New");
+            });
+            GridMenuItem<SqlDefinition> deleteItem = contextMenu.addItem("Delete", event -> {
+                deleteTreeGridItem(event.getItem().get());
+            });
+        }
         return treeGrid;
+    }
+
+    private VerticalLayout showEditAndNewDialog(SqlDefinition sqlDefinition, String context){
+        VerticalLayout dialogLayout = new VerticalLayout();
+        Dialog dialog = new Dialog();
+        SqlDefinition newSqlDefinition = new SqlDefinition();
+
+        if(context.equals("New")){
+            List<SqlDefinition> sqlDefinitionList = sqlDefinitionService.getAllSqlDefinitions();
+            newSqlDefinition.setId((long) (sqlDefinitionList.size() + 1));
+            newSqlDefinition.setPid(sqlDefinition.getPid());
+            dialog.add(editSqlDefination(newSqlDefinition, true)); // For adding new entry
+        } else {
+            dialog.add(editSqlDefination(sqlDefinition, false)); // For editing existing entry
+        }
+
+        dialog.setDraggable(true);
+        dialog.setResizable(true);
+        dialog.setWidth("1000px");
+        dialog.setHeight("400px");
+        Button cancelButton = new Button("Cancel");
+        Button saveButton = new Button(context.equals("Edit") ? "Save" : "Add");
+        dialog.getFooter().add(saveButton, cancelButton);
+
+        cancelButton.addClickListener(cancelEvent -> {
+            dialog.close(); // Close the confirmation dialog
+        });
+
+        saveButton.addClickListener(saveEvent -> {
+            System.out.println("saved data....");
+            if(context.equals("New")) {
+                saveSqlDefinition(newSqlDefinition);
+            } else {
+                saveSqlDefinition(sqlDefinition);
+            }
+            sqlDefinitionService.getAllSqlDefinitions();
+            treeGrid.setItems(sqlDefinitionService.getRootProjects(), sqlDefinitionService ::getChildProjects);
+         //   rows = retrieveRows();
+           // treeg.setItems(param_Liste);
+            dialog.close(); // Close the confirmation dialog
+        });
+
+        dialog.open();
+
+        return dialogLayout;
+
+    }
+
+    private Component editSqlDefination(SqlDefinition sqlDefinition, boolean isNew) {
+        VerticalLayout content = new VerticalLayout();
+
+        TextField name = new TextField("NAME");
+        name.setValue(isNew ? "" : (sqlDefinition.getName() != null ? sqlDefinition.getName() : ""));
+        name.setWidthFull();
+
+        TextField sql = new TextField("SQL");
+        sql.setValue(isNew ? "" : (sqlDefinition.getSql() != null ? sqlDefinition.getSql() : ""));
+        sql.setWidthFull();
+
+        TextField beschreibung = new TextField("BESCHREIBUNG");
+        beschreibung.setValue(isNew ? "" : (sqlDefinition.getBeschreibung() != null ? sqlDefinition.getBeschreibung() : ""));
+        beschreibung.setWidthFull();
+
+        TextField pid = new TextField("PID");
+        pid.setValue(sqlDefinition.getPid() != null ? sqlDefinition.getPid().toString() : "");
+        pid.setWidthFull();
+
+        MultiSelectComboBox<String> rolesComboBox = new MultiSelectComboBox<>("Roles");
+        List<SqlDefinition> sqlDefinitionList = sqlDefinitionService.getAllSqlDefinitions();
+        rolesComboBox.setWidthFull();
+
+        // Collect unique access roles from all SqlDefinition items
+        Set<String> uniqueAccessRoles = sqlDefinitionList.stream()
+                .map(SqlDefinition::getAccessRoles)
+                .filter(Objects::nonNull)
+                .flatMap(accessRoles -> Arrays.stream(accessRoles.split(",")))
+                .map(String::trim)
+                .collect(Collectors.toSet());
+        rolesComboBox.setItems(uniqueAccessRoles);
+
+        String accessRoles = sqlDefinition.getAccessRoles();
+        if(accessRoles != null) {
+            rolesComboBox.setValue(accessRoles.split(","));
+        }
+
+        // Add value change listeners to trigger binder updates
+        name.addValueChangeListener(event -> sqlDefinition.setName(event.getValue()));
+        sql.addValueChangeListener(event -> sqlDefinition.setSql(event.getValue()));
+        beschreibung.addValueChangeListener(event -> sqlDefinition.setBeschreibung(event.getValue()));
+        pid.addValueChangeListener(event -> {
+            try {
+                if (event.getValue() != null && !event.getValue().isEmpty()) {
+                    Long pidValue = Long.parseLong(event.getValue());
+                    sqlDefinition.setPid(pidValue);
+                } else {
+                    sqlDefinition.setPid(null);
+                }
+            } catch (NumberFormatException e) {
+                Notification.show(e.getCause().getMessage(), 5000, Notification.Position.MIDDLE);
+            }
+        });
+
+        rolesComboBox.addValueChangeListener(event -> {
+            String selectedRolesString = String.join(",", event.getValue());
+            sqlDefinition.setAccessRoles(selectedRolesString);
+        });
+
+        content.add(name,sql,beschreibung, pid, rolesComboBox);
+        return content;
+    }
+
+    private Component deleteTreeGridItem(SqlDefinition sqlDefinition) {
+
+        VerticalLayout dialogLayout = new VerticalLayout();
+        Dialog dialog = new Dialog();
+        dialog.setDraggable(true);
+        dialog.setResizable(true);
+        dialog.setWidth("500px");
+        dialog.setHeight("150px");
+        Button cancelButton = new Button("Cancel");
+        Button deleteButton = new Button("Delete");
+        Text deleteConfirmationText = new Text("Are you sure you want to delete?");
+        dialog.add(deleteConfirmationText);
+        dialog.getFooter().add(deleteButton, cancelButton);
+
+        cancelButton.addClickListener(cancelEvent -> {
+            dialog.close(); // Close the confirmation dialog
+        });
+
+        deleteButton.addClickListener(saveEvent -> {
+            sqlDefinitionService.deleteSqlDefinitionById(sqlDefinition.getId());
+            sqlDefinitionService.getAllSqlDefinitions();
+            treeGrid.setItems(sqlDefinitionService.getRootProjects(), sqlDefinitionService ::getChildProjects);
+            dialog.close(); // Close the confirmation dialog
+        });
+
+        dialog.open();
+
+        return dialogLayout;
     }
 
   /*  private Tree createTree(){
@@ -391,6 +538,9 @@ public class TableView extends VerticalLayout {
         return Collections.emptyList();
     }
 
+    public void saveSqlDefinition(SqlDefinition sqlDefinition) {
+       sqlDefinitionService.saveSqlDefinition(sqlDefinition);
+    }
 
     public List<LinkedHashMap<String,Object>> retrieveRows_old(String queryString) throws SQLException, IOException {
 
@@ -511,18 +661,21 @@ public class TableView extends VerticalLayout {
             // Write the workbook to the specified file
             try (FileOutputStream fileOut = new FileOutputStream(fileName)) {
                 workbook.write(fileOut);
+            } catch (Exception e) {
+                // e.printStackTrace();
+                Notification.show(e.getMessage(), 5000, Notification.Position.MIDDLE);
             }
-
             // Close the workbook
             workbook.close();
 
             File file = new File(fileName);
             StreamResource streamResource = new StreamResource(file.getName(), () -> getStream(file));
-            // Configure the anchor element for downloading the file
-            anchor.setHref(streamResource);
-          //  anchor.getElement().setAttribute("download", true);
-            anchor.setEnabled(true);
-       //     UI.getCurrent().getPage().executeJs("arguments[0].click()", anchor);
+
+            Anchor anchor = new Anchor(streamResource, "");
+            anchor.getElement().setAttribute("download", true);
+            anchor.getElement().getStyle().set("display", "none");
+            add(anchor);
+            UI.getCurrent().getPage().executeJs("arguments[0].click()", anchor);
         } catch (IOException e) {
             e.printStackTrace();
         }

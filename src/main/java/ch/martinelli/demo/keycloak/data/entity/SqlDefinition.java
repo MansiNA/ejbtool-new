@@ -26,4 +26,7 @@ public class SqlDefinition {
     @Column(name = "NAME", length = 200)
     private String name;
 
+    @Column(name = "ACCESS_ROLES", length = 200)
+    private String accessRoles;
+
 }
