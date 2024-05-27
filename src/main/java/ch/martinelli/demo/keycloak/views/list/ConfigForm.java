@@ -45,6 +45,10 @@ public class ConfigForm extends FormLayout {
     }
     public void setConfiguration(Configuration config){
         this.configuration = config;
+        if(config != null) {
+            config.setPassword("");
+        }
+
         binder.readBean(config);
     }
 
