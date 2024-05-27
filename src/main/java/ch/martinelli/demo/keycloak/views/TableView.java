@@ -97,7 +97,7 @@ public class TableView extends VerticalLayout {
         comboBox.setItems(configList);
         comboBox.setValue(configList.get(1) );
 
-        comboBox.setItemLabelGenerator(Configuration::get_Message_Connection);
+        comboBox.setItemLabelGenerator(Configuration::getName);
 
         //  comboBox.setValue(service.findAllConfigurations().stream().findFirst().get());
         // Add value change listener to comboBox
@@ -524,7 +524,8 @@ public class TableView extends VerticalLayout {
         if (queryString != null) {
             try {
                 Configuration conf = comboBox.getValue();
-                DataSource dataSource = getDataSourceUsingParameter(conf.getDb_Url(), conf.getUserName(), conf.getPassword());
+                String password = Configuration.decodePassword(conf.getPassword());
+                DataSource dataSource = getDataSourceUsingParameter(conf.getDb_Url(), conf.getUserName(), password);
                 jdbcTemplate = new JdbcTemplate(dataSource);
                 rows = jdbcTemplate.queryForList(queryString);
                 connectionClose(jdbcTemplate);
@@ -560,9 +561,10 @@ public class TableView extends VerticalLayout {
                 conf = comboBox.getValue();
 
                 Class.forName("oracle.jdbc.driver.OracleDriver");
+                String password = Configuration.decodePassword(conf.getPassword());
 
                 //    Connection conn=DriverManager.getConnection(url, user, password);
-                Connection conn = DriverManager.getConnection(conf.getDb_Url(), conf.getUserName(), conf.getPassword());
+                Connection conn = DriverManager.getConnection(conf.getDb_Url(), conf.getUserName(), password);
 
 
                 s = conn.prepareStatement(queryString);
@@ -694,9 +696,9 @@ public class TableView extends VerticalLayout {
 
 
             Class.forName("oracle.jdbc.driver.OracleDriver");
-
+            String password = Configuration.decodePassword(conf.getPassword());
             //    Connection conn=DriverManager.getConnection(url, user, password);
-            Connection conn=DriverManager.getConnection(conf.getDb_Url(), conf.getUserName(), conf.getPassword());
+            Connection conn=DriverManager.getConnection(conf.getDb_Url(), conf.getUserName(), password);
 
             //   DriverManager.registerDriver(new oracle.jdbc.driver.OracleDriver());
 

@@ -131,7 +131,7 @@ public class CockpitView extends VerticalLayout{
 
             ds.setUrl(conf.getDb_Url());
             ds.setUsername(conf.getUserName());
-            ds.setPassword(conf.getPassword());
+            ds.setPassword(Configuration.decodePassword(conf.getPassword()));
 
             try {
                 jdbcTemplate.setDataSource(ds);
@@ -308,7 +308,7 @@ public class CockpitView extends VerticalLayout{
         comboBox = new ComboBox<>("Verbindung");
         List<Configuration> configList = service.findMessageConfigurations();
         comboBox.setItems(configList);
-        comboBox.setItemLabelGenerator(Configuration::get_Message_Connection);
+        comboBox.setItemLabelGenerator(Configuration::getName);
         comboBox.setValue(configList.get(1) );
 
         autorefresh.setLabel("Autorefresh");
@@ -708,7 +708,7 @@ public class CockpitView extends VerticalLayout{
 
         ds.setUrl(conf.getDb_Url());
         ds.setUsername(conf.getUserName());
-        ds.setPassword(conf.getPassword());
+        ds.setPassword(Configuration.decodePassword(conf.getPassword()));
 
         try {
 
@@ -788,8 +788,9 @@ public class CockpitView extends VerticalLayout{
 
             Class.forName("oracle.jdbc.driver.OracleDriver");
 
+            String password = Configuration.decodePassword(conf.getPassword());
             //    Connection conn=DriverManager.getConnection(url, user, password);
-            Connection conn= DriverManager.getConnection(conf.getDb_Url(), conf.getUserName(), conf.getPassword());
+            Connection conn= DriverManager.getConnection(conf.getDb_Url(), conf.getUserName(), password);
 
 
             s = conn.prepareStatement(queryString);
@@ -1251,7 +1252,7 @@ private static VerticalLayout showDialog(fvm_monitoring Inhalt){
 
         ds.setUrl(conf.getDb_Url());
         ds.setUsername(conf.getUserName());
-        ds.setPassword(conf.getPassword());
+        ds.setPassword(Configuration.decodePassword(conf.getPassword()));
 
         try {
 
@@ -1288,7 +1289,7 @@ private static VerticalLayout showDialog(fvm_monitoring Inhalt){
 
         ds.setUrl(conf.getDb_Url());
         ds.setUsername(conf.getUserName());
-        ds.setPassword(conf.getPassword());
+        ds.setPassword(Configuration.decodePassword(conf.getPassword()));
 
         try {
 

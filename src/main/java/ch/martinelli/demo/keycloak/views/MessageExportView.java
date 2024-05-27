@@ -125,7 +125,7 @@ public class MessageExportView extends VerticalLayout {
 
         comboBox = new ComboBox<>("Verbindung");
         comboBox.setItems(service.findMessageConfigurations());
-        comboBox.setItemLabelGenerator(Configuration::get_Message_Connection);
+        comboBox.setItemLabelGenerator(Configuration::getName);
 
 
 
@@ -330,7 +330,7 @@ public class MessageExportView extends VerticalLayout {
         conf=comboBox.getValue();
         ds.setUrl(conf.getDb_Url());
         ds.setUsername(conf.getUserName());
-        ds.setPassword(conf.getPassword());
+        ds.setPassword(Configuration.decodePassword(conf.getPassword()));
 
         //ds.setUrl("jdbc:oracle:thin:@37.120.189.200:1521:xe");
         //ds.setUsername("SYSTEM");
