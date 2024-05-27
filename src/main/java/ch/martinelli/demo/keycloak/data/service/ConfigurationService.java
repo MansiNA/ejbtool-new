@@ -13,7 +13,6 @@ import java.util.Optional;
 public class ConfigurationService {
 
     private ConfigurationRepository configurationRepository;
-    private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
     public ConfigurationService(ConfigurationRepository configurationRepository) {
 
@@ -60,7 +59,8 @@ public class ConfigurationService {
 
             if (passwordChanged) {
                 System.out.println("password changed!!!!");
-                String encodedPassword = encoder.encode(config.getPassword());
+                String encodedPassword = Configuration.encodePassword(config.getPassword());
+              //  String encodedPassword = (config.getPassword());
                 configurationRepository.updateWithPassword(
                         config.getId(),
                         config.getName(),
@@ -78,7 +78,7 @@ public class ConfigurationService {
                 );
             }
         } else {
-            config.setPassword(encoder.encode(config.getPassword()));
+            config.setPassword(Configuration.encodePassword(config.getPassword()));
             configurationRepository.save(config);
         }
     }

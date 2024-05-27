@@ -131,7 +131,7 @@ public class CockpitView extends VerticalLayout{
 
             ds.setUrl(conf.getDb_Url());
             ds.setUsername(conf.getUserName());
-            ds.setPassword(conf.getPassword());
+            ds.setPassword(Configuration.decodePassword(conf.getPassword()));
 
             try {
                 jdbcTemplate.setDataSource(ds);
@@ -708,7 +708,7 @@ public class CockpitView extends VerticalLayout{
 
         ds.setUrl(conf.getDb_Url());
         ds.setUsername(conf.getUserName());
-        ds.setPassword(conf.getPassword());
+        ds.setPassword(Configuration.decodePassword(conf.getPassword()));
 
         try {
 
@@ -788,8 +788,9 @@ public class CockpitView extends VerticalLayout{
 
             Class.forName("oracle.jdbc.driver.OracleDriver");
 
+            String password = Configuration.decodePassword(conf.getPassword());
             //    Connection conn=DriverManager.getConnection(url, user, password);
-            Connection conn= DriverManager.getConnection(conf.getDb_Url(), conf.getUserName(), conf.getPassword());
+            Connection conn= DriverManager.getConnection(conf.getDb_Url(), conf.getUserName(), password);
 
 
             s = conn.prepareStatement(queryString);
@@ -1251,7 +1252,7 @@ private static VerticalLayout showDialog(fvm_monitoring Inhalt){
 
         ds.setUrl(conf.getDb_Url());
         ds.setUsername(conf.getUserName());
-        ds.setPassword(conf.getPassword());
+        ds.setPassword(Configuration.decodePassword(conf.getPassword()));
 
         try {
 
@@ -1288,7 +1289,7 @@ private static VerticalLayout showDialog(fvm_monitoring Inhalt){
 
         ds.setUrl(conf.getDb_Url());
         ds.setUsername(conf.getUserName());
-        ds.setPassword(conf.getPassword());
+        ds.setPassword(Configuration.decodePassword(conf.getPassword()));
 
         try {
 

@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import java.util.Base64;
+
 @Getter
 @Setter
 @Entity
@@ -25,9 +27,18 @@ public class Configuration extends AbstractEntity{
     @PrePersist
     @PreUpdate
     private void encryptPassword() {
-        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-        if (!encoder.matches(password, this.password)) {
-            this.password = encoder.encode(this.password);
-        }
+        this.password = encodePassword(this.password);
+    }
+
+    // Method to encode a password to Base64
+    // Method to encode a password to URL-safe Base64
+    public static String encodePassword(String plainTextPassword) {
+        return Base64.getUrlEncoder().encodeToString(plainTextPassword.getBytes());
+    }
+
+    // Method to decode a password from URL-safe Base64
+    public static String decodePassword(String encodedPassword) {
+        byte[] decodedBytes = Base64.getUrlDecoder().decode(encodedPassword);
+        return new String(decodedBytes);
     }
 }
