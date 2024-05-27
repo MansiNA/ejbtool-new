@@ -1,11 +1,10 @@
 package ch.martinelli.demo.keycloak.data.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @Getter
 @Setter
@@ -23,5 +22,12 @@ public class Configuration extends AbstractEntity{
     private String password="";
     @NotEmpty
     private String db_Url="";
-
+    @PrePersist
+    @PreUpdate
+    private void encryptPassword() {
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        if (!encoder.matches(password, this.password)) {
+            this.password = encoder.encode(this.password);
+        }
+    }
 }
