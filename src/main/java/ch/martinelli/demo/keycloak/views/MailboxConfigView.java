@@ -57,7 +57,7 @@ public class MailboxConfigView extends VerticalLayout {
 
         comboBox = new ComboBox<>("Verbindung");
         comboBox.setItems(service.findMessageConfigurations());
-        comboBox.setItemLabelGenerator(Configuration::get_Message_Connection);
+        comboBox.setItemLabelGenerator(Configuration::getName);
 
     //    comboBox.setValue(service.findAllConfigurations().stream().findFirst().get());
         comboBox.setPlaceholder("auswählen");

@@ -97,7 +97,7 @@ public class TableView extends VerticalLayout {
         comboBox.setItems(configList);
         comboBox.setValue(configList.get(1) );
 
-        comboBox.setItemLabelGenerator(Configuration::get_Message_Connection);
+        comboBox.setItemLabelGenerator(Configuration::getName);
 
         //  comboBox.setValue(service.findAllConfigurations().stream().findFirst().get());
         // Add value change listener to comboBox

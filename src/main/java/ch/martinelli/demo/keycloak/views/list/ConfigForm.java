@@ -19,8 +19,7 @@ import com.vaadin.flow.shared.Registration;
 public class ConfigForm extends FormLayout {
 
     Binder<Configuration> binder = new BeanValidationBinder<>(Configuration.class);
-    TextField land = new TextField("Land");
-    TextField umgebung = new TextField("Umgebung");
+    TextField name = new TextField("Name");
     TextField userName = new TextField("Username");
     PasswordField password = new PasswordField("Password");
     TextField db_Url = new TextField("DB-ConnectionString");
@@ -37,8 +36,7 @@ public class ConfigForm extends FormLayout {
        binder.bindInstanceFields(this);
 
         add(
-                land,
-                umgebung,
+                name,
                 userName,
                 password,
                 db_Url,

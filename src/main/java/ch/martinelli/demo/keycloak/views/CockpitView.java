@@ -308,7 +308,7 @@ public class CockpitView extends VerticalLayout{
         comboBox = new ComboBox<>("Verbindung");
         List<Configuration> configList = service.findMessageConfigurations();
         comboBox.setItems(configList);
-        comboBox.setItemLabelGenerator(Configuration::get_Message_Connection);
+        comboBox.setItemLabelGenerator(Configuration::getName);
         comboBox.setValue(configList.get(1) );
 
         autorefresh.setLabel("Autorefresh");
